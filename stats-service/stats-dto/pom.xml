@@ -6,20 +6,13 @@
 
     <parent>
         <groupId>ru.practicum</groupId>
-        <artifactId>explore-with-me</artifactId>
+        <artifactId>stats-service</artifactId>
         <version>0.0.1-SNAPSHOT</version>
     </parent>
 
-    <artifactId>stats-service</artifactId>
+    <artifactId>stats-dto</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <packaging>pom</packaging>
 
-    <name>stats-service</name>
-
-    <modules>
-        <module>stats-dto</module>
-        <module>stats-client</module>
-        <module>stats-server</module>
-    </modules>
+    <name>Statistics data</name>
 
 </project>
