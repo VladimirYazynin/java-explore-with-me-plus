@@ -12,19 +12,16 @@ import ru.practicum.repository.StatsRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class StatsServiceImpl implements StatsService {
     private final StatsRepository statsRepository;
-    private final EndpointHitMapper endpointHitMapper;
-    private final ViewStatsMapper viewStatsMapper;
 
     @Override
     public EndpointHitDto send(EndpointHitDto endpointHit) {
-        EndpointHit endpoint = statsRepository.save(endpointHitMapper.toEndpointHit(endpointHit));
-        return endpointHitMapper.toEndpointHitDto(endpoint);
+        EndpointHit endpoint = statsRepository.save(EndpointHitMapper.toEndpointHit(endpointHit));
+        return EndpointHitMapper.toEndpointHitDto(endpoint);
     }
 
     @Override
@@ -43,6 +40,8 @@ public class StatsServiceImpl implements StatsService {
                 views = statsRepository.getByStartAndEnd(start, end);
             }
         }
-        return views.stream().map(viewStatsMapper::toViewStatsDto).collect(Collectors.toList());
+        return views.stream()
+                .map(ViewStatsMapper::toViewStatsDto)
+                .toList();
     }
 }

@@ -45,7 +45,7 @@ public class StatsControllerTest {
                         .characterEncoding(UTF_8)
                         .contentType(APPLICATION_JSON)
                         .accept(APPLICATION_JSON))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id", is(endpoint.getId()), Long.class))
                 .andExpect(jsonPath("$.app", is(endpoint.getApp())))
                 .andExpect(jsonPath("$.uri", is(endpoint.getUri())))

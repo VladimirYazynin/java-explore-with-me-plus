@@ -1,26 +1,24 @@
 package ru.practicum.mapper;
 
-import org.springframework.stereotype.Component;
 import ru.practicum.EndpointHitDto;
 import ru.practicum.model.EndpointHit;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
-@Component
 public class EndpointHitMapper {
-    private final DateTimeFormatter format = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private static final DateTimeFormatter FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-    public EndpointHit toEndpointHit(EndpointHitDto endpointHitDto) {
+    public static EndpointHit toEndpointHit(EndpointHitDto endpointHitDto) {
         return new EndpointHit(
                 endpointHitDto.getId(),
                 endpointHitDto.getApp(),
                 endpointHitDto.getUri(),
                 endpointHitDto.getIp(),
-                LocalDateTime.parse(endpointHitDto.getTimestamp(), format));
+                LocalDateTime.parse(endpointHitDto.getTimestamp(), FORMAT));
     }
 
-    public EndpointHitDto toEndpointHitDto(EndpointHit endpointHit) {
+    public static EndpointHitDto toEndpointHitDto(EndpointHit endpointHit) {
         return new EndpointHitDto(
                 endpointHit.getId(),
                 endpointHit.getApp(),

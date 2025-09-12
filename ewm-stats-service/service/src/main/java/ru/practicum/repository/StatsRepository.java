@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
-public interface StatsRepository extends JpaRepository<EndpointHit, Integer> {
+public interface StatsRepository extends JpaRepository<EndpointHit, Long> {
     @Query("select new ru.practicum.model.ViewStats (e.app, e.uri, count(e.ip) as hits) from EndpointHit e " +
             "where e.uri in (?1) and e.timestamp between ?2 and ?3 group by e.ip, e.uri, e.app order by hits desc")
     List<ViewStats> getByUris(String[] uris, LocalDateTime start, LocalDateTime end);
