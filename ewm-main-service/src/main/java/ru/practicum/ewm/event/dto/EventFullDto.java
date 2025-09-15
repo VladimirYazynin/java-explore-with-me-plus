@@ -1,4 +1,4 @@
 package ru.practicum.ewm.event.dto;
 
-public class EventDto {
+public class EventFullDto {
 }
