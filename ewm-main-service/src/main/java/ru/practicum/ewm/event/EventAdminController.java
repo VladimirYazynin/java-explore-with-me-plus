@@ -2,11 +2,14 @@ package ru.practicum.ewm.event;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import ru.practicum.ewm.event.dto.EventFilter;
 import ru.practicum.ewm.event.dto.EventFullDto;
 import ru.practicum.ewm.event.dto.UpdateEventAdminRequest;
+import ru.practicum.ewm.event.exceptions.EventConditionException;
 import ru.practicum.ewm.event.exceptions.EventNotFound;
 import ru.practicum.ewm.event.interfaces.EventService;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -21,8 +24,8 @@ public class EventAdminController {
             @RequestParam Integer[] users,
             @RequestParam String[] states,
             @RequestParam Integer[] categories,
-            @RequestParam String rangeStart,
-            @RequestParam String rangeEnd,
+            @RequestParam LocalDateTime rangeStart,
+            @RequestParam LocalDateTime rangeEnd,
             @RequestParam(defaultValue = "0") int from,
             @RequestParam(defaultValue = "10") int size
     ) {
@@ -31,7 +34,10 @@ public class EventAdminController {
     }
 
     @PatchMapping("/{eventId}")
-    EventFullDto patchEvent(@PathVariable Long eventId, UpdateEventAdminRequest dto) throws EventNotFound {
+    EventFullDto patchEvent(
+            @PathVariable Long eventId,
+            @RequestBody UpdateEventAdminRequest dto
+    ) throws EventNotFound, EventConditionException {
         return eventService.updateEvent(eventId, dto);
     }
 }

@@ -1,13 +1,17 @@
 package ru.practicum.ewm.event;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
+import ru.practicum.ewm.event.dto.EventFilter;
 import ru.practicum.ewm.event.dto.EventFullDto;
 import ru.practicum.ewm.event.dto.EventShortDto;
+import ru.practicum.ewm.event.dto.RequestInfo;
 import ru.practicum.ewm.event.exceptions.EventNotFound;
 import ru.practicum.ewm.event.interfaces.EventService;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Slf4j
@@ -23,20 +27,23 @@ public class EventPublicController {
             @RequestParam String text,
             @RequestParam Integer[] categories,
             @RequestParam Boolean paid,
-            @RequestParam String rangeStart,
-            @RequestParam String rangeEnd,
+            @RequestParam LocalDateTime rangeStart,
+            @RequestParam LocalDateTime rangeEnd,
             @RequestParam(defaultValue = "false") Boolean onlyAvailable,
             @RequestParam String sort,
             @RequestParam(defaultValue = "0") int from,
-            @RequestParam(defaultValue = "10") int size
+            @RequestParam(defaultValue = "10") int size,
+            HttpServletRequest request
     ) {
         EventFilter filter =
                 new EventFilter(text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, from, size);
-        return eventService.findPublishedEvents(filter);
+        RequestInfo info = new RequestInfo(request.getRemoteAddr(), request.getRequestURI());
+        return eventService.findPublishedEvents(filter, info);
     }
 
     @GetMapping("/{id}")
-    EventFullDto getEventById(@PathVariable long id) throws EventNotFound {
-        return eventService.getEventById(id);
+    EventFullDto getEventById(@PathVariable long id, HttpServletRequest request) throws EventNotFound {
+        RequestInfo info = new RequestInfo(request.getRemoteAddr(), request.getRequestURI());
+        return eventService.getEventById(id, info);
     }
 }
