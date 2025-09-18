@@ -1,4 +1,6 @@
 package ru.practicum.ewm.event.exceptions;
 
-public class EventParticipantNotExists extends Exception{
+import ru.practicum.ewm.exception.model.NotExistsException;
+
+public class EventParticipantNotExists extends NotExistsException {
 }

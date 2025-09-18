@@ -1,4 +1,6 @@
 package ru.practicum.ewm.event.exceptions;
 
-public class EventConditionException extends Exception{
+import ru.practicum.ewm.exception.model.DataViolationException;
+
+public class EventConditionException extends DataViolationException {
 }
