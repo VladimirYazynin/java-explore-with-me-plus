@@ -2,8 +2,8 @@ package ru.practicum.ewm.request.model;
 
 import jakarta.persistence.*;
 import lombok.*;
-import ru.practicum.enums.State;
-import ru.practicum.event.model.Event;
+
+import ru.practicum.ewm.event.Status;
 import ru.practicum.ewm.user.model.User;
 
 import java.time.LocalDateTime;
@@ -21,10 +21,10 @@ public class ParticipationRequest {
     private LocalDateTime created;
     @ManyToOne
     @JoinColumn(name = "event_id")
-    private Event event;
+    private Long eventId;
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User requester;
     @Enumerated(EnumType.STRING)
-    private State status;
+    private Status status;
 }
