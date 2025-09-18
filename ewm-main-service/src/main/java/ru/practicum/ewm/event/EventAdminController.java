@@ -29,7 +29,14 @@ public class EventAdminController {
             @RequestParam(defaultValue = "0") int from,
             @RequestParam(defaultValue = "10") int size
     ) {
-        EventFilter filter = new EventFilter(users, states, categories, rangeStart, rangeEnd, from, size);
+        EventFilter filter = new EventFilter();
+        filter.setUsers(users);
+        filter.setStates(states);
+        filter.setCategories(categories);
+        filter.setRangeStart(rangeStart);
+        filter.setRangeEnd(rangeEnd);
+        filter.setFrom(from);
+        filter.setSize(size);
         return eventService.findAllEvents(filter);
     }
 

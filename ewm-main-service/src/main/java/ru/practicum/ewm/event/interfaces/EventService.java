@@ -4,6 +4,7 @@ import ru.practicum.ewm.event.dto.*;
 import ru.practicum.ewm.event.exceptions.EventConditionException;
 import ru.practicum.ewm.event.exceptions.EventNotFound;
 import ru.practicum.ewm.event.exceptions.EventParticipantNotExists;
+import ru.practicum.ewm.request.dto.ParticipationRequestDto;
 
 import java.util.List;
 

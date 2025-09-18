@@ -8,6 +8,7 @@ import ru.practicum.ewm.event.exceptions.EventConditionException;
 import ru.practicum.ewm.event.exceptions.EventNotFound;
 import ru.practicum.ewm.event.exceptions.EventParticipantNotExists;
 import ru.practicum.ewm.event.interfaces.EventService;
+import ru.practicum.ewm.request.dto.ParticipationRequestDto;
 
 import java.util.List;
 
@@ -26,7 +27,9 @@ public class EventPrivateController {
             @RequestParam(defaultValue = "0") int from,
             @RequestParam(defaultValue = "10") int size
     ) {
-        EventFilter filter = new EventFilter(from, size);
+        EventFilter filter = new EventFilter();
+        filter.setFrom(from);
+        filter.setSize(size);
         return eventService.findEventsAddedByUser(userId, filter);
     }
 

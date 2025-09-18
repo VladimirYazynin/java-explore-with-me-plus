@@ -35,8 +35,16 @@ public class EventPublicController {
             @RequestParam(defaultValue = "10") int size,
             HttpServletRequest request
     ) {
-        EventFilter filter =
-                new EventFilter(text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, from, size);
+        EventFilter filter = new EventFilter();
+        filter.setText(text);
+        filter.setCategories(categories);
+        filter.setPaid(paid);
+        filter.setRangeStart(rangeStart);
+        filter.setRangeEnd(rangeEnd);
+        filter.setOnlyAvailable(onlyAvailable);
+        filter.setSort(sort);
+        filter.setFrom(from);
+        filter.setSize(size);
         RequestInfo info = new RequestInfo(request.getRemoteAddr(), request.getRequestURI());
         return eventService.findPublishedEvents(filter, info);
     }

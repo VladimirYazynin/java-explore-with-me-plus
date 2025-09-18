@@ -1,14 +1,20 @@
 package ru.practicum.ewm.event.dto;
 
+import lombok.Data;
+
 import java.time.LocalDateTime;
 
+@Data
 public class EventFilter {
-    public EventFilter(String text, Integer[] categories, Boolean paid, LocalDateTime rangeStart, LocalDateTime rangeEnd, Boolean onlyAvailable, String sort, int from, int size) {
-    }
-
-    public EventFilter(Integer[] users, String[] states, Integer[] categories, LocalDateTime rangeStart, LocalDateTime rangeEnd, int from, int size) {
-    }
-
-    public EventFilter(int from, int size) {
-    }
+    private String text;
+    private String[] states;
+    private Integer[] categories;
+    private Integer[] users;
+    private Boolean paid;
+    private LocalDateTime rangeStart;
+    private LocalDateTime rangeEnd;
+    private Boolean onlyAvailable;
+    private String sort;
+    private int from;
+    private int size;
 }
