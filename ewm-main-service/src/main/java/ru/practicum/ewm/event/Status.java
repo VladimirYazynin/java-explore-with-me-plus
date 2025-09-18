@@ -1,5 +1,5 @@
 package ru.practicum.ewm.event;
 
 public enum Status {
-    CONFIRMED, REJECTED;
+    PENDING, CONFIRMED, REJECTED;
 }
