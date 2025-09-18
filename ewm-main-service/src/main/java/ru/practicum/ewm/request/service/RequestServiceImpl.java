@@ -3,9 +3,9 @@ package ru.practicum.ewm.request.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import ru.practicum.enums.State;
-import ru.practicum.event.model.Event;
-import ru.practicum.event.repository.EventRepository;
+import ru.practicum.ewm.event.State;
+import ru.practicum.ewm.event.Event;
+import ru.practicum.ewm.event.EventRepository;
 import ru.practicum.ewm.exception.model.DataViolationException;
 import ru.practicum.ewm.exception.model.NotFoundException;
 import ru.practicum.ewm.request.dto.ParticipationRequestDto;
@@ -19,7 +19,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static ru.practicum.enums.State.*;
+import static ru.practicum.ewm.event.State.*;
 
 @Slf4j
 @Service
