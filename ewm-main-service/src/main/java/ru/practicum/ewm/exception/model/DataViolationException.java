@@ -1,10 +1,11 @@
 package ru.practicum.ewm.exception.model;
 
+import org.springframework.http.HttpStatus;
+
 import java.time.LocalDateTime;
 
 public class DataViolationException extends EwmException {
-
-    public DataViolationException(String message, String reason, ExceptionStatus status, LocalDateTime timestamp) {
-        super(message, reason, status, timestamp);
+    public DataViolationException(String message, String reason, LocalDateTime timestamp) {
+        super(message, reason, timestamp, HttpStatus.BAD_REQUEST);
     }
 }
