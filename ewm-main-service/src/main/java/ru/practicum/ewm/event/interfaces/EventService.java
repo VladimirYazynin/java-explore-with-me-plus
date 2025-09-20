@@ -5,12 +5,13 @@ import ru.practicum.ewm.event.exceptions.EventConditionException;
 import ru.practicum.ewm.event.exceptions.EventNotFound;
 import ru.practicum.ewm.event.exceptions.EventParticipantNotExists;
 import ru.practicum.ewm.exception.model.NotFoundException;
+import ru.practicum.ewm.exception.model.NotPublishedException;
 import ru.practicum.ewm.request.dto.ParticipationRequestDto;
 
 import java.util.List;
 
 public interface EventService {
-    EventFullDto getEventById(long id, RequestInfo info) throws EventNotFound;
+    EventFullDto getEventById(long id, RequestInfo info) throws EventNotFound, NotPublishedException;
 
     List<EventShortDto> findPublishedEvents(EventFilter filter, RequestInfo info);
 
