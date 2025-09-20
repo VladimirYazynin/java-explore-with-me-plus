@@ -7,8 +7,8 @@ import ru.practicum.ewm.category.dto.CategoryDto;
 public class CategoryMapperImpl implements CategoryMapper {
 
     @Override
-    public Category mapToCategory() {
-        return null;
+    public Category mapToCategory(CategoryDto categoryDto) {
+        return new Category(categoryDto.getId(), categoryDto.getName());
     }
 
     @Override

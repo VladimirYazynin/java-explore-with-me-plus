@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 public class EventFullDto {
     private String annotation;
     private CategoryDto category;
-    private Long confirmedRequests;
+    private long confirmedRequests;
     private LocalDateTime createdOn;
     private String description;
     private LocalDateTime eventDate;

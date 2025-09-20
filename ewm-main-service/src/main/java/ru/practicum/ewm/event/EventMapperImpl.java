@@ -21,10 +21,10 @@ public class EventMapperImpl implements EventMapper {
 
 
     @Override
-    public Event mapToEvent(NewEventDto newEvent) {
+    public Event mapToEvent(NewEventDto newEvent, Category category) {
         return Event.builder()
                 .annotation(newEvent.getAnnotation())
-                .category(newEvent.getCategory())
+                .category(category)
                 .description(newEvent.getDescription())
                 .eventDate(newEvent.getEventDate())
                 .location(newEvent.getLocation())
@@ -35,7 +35,7 @@ public class EventMapperImpl implements EventMapper {
                 .build();
     }
 
-    public EventFullDto mapToEventFullDto(Event event) {
+    public EventFullDto mapToEventFullDto(Event event, long confirmedRequests, long views) {
         CategoryDto category = null;
         UserShortDto initiator = null;
 
@@ -50,7 +50,7 @@ public class EventMapperImpl implements EventMapper {
                 .id(event.getId())
                 .annotation(event.getAnnotation())
                 .category(category)
-                .confirmedRequests(event.getConfirmedRequests())
+                .confirmedRequests(confirmedRequests)
                 .createdOn(event.getCreatedOn())
                 .description(event.getDescription())
                 .eventDate(event.getEventDate())
@@ -61,7 +61,7 @@ public class EventMapperImpl implements EventMapper {
                 .requestModeration(event.getRequestModeration())
                 .state(event.getState())
                 .title(event.getTitle())
-                .views(event.getViews())
+                .views(views)
                 .build();
     }
 }
