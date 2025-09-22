@@ -19,17 +19,29 @@
     </properties>
 
     <dependencies>
-    <dependency>
-        <groupId>ru.practicum</groupId>
-        <artifactId>client</artifactId>
-        <version>0.0.1</version>
-    </dependency>
-
-    <dependency>
-        <groupId>ru.practicum</groupId>
-        <artifactId>dto</artifactId>
-        <version>0.0.1</version>
-    </dependency>
+        <dependency>
+            <groupId>com.querydsl</groupId>
+            <artifactId>querydsl-jpa</artifactId>
+            <version>5.1.0</version>
+        </dependency>
+        <dependency>
+            <groupId>ru.practicum</groupId>
+            <artifactId>client</artifactId>
+            <version>0.0.1</version>
+        </dependency>
+        <dependency>
+            <groupId>ru.practicum</groupId>
+            <artifactId>dto</artifactId>
+            <version>0.0.1</version>
+        </dependency>
     </dependencies>
 
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
 </project>
