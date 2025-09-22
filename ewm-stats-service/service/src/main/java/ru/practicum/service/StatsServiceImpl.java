@@ -35,7 +35,11 @@ public class StatsServiceImpl implements StatsService {
             }
         } else {
             if (uris != null) {
-                views = statsRepository.getByUris(uris, start, end);
+                if (start == null && end == null) {
+                    views = statsRepository.findAllByUriIn(uris);
+                } else {
+                    views = statsRepository.getByUris(uris, start, end);
+                }
             } else {
                 views = statsRepository.getByStartAndEnd(start, end);
             }
