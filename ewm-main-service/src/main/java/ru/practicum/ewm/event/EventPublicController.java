@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.*;
 import ru.practicum.ewm.event.dto.EventFilter;
 import ru.practicum.ewm.event.dto.EventFullDto;
 import ru.practicum.ewm.event.dto.EventShortDto;
-import ru.practicum.ewm.event.dto.RequestInfo;
+import ru.practicum.statistics.RequestInfo;
 import ru.practicum.ewm.event.exceptions.EventNotFound;
 import ru.practicum.ewm.event.interfaces.EventService;
 
@@ -52,6 +52,6 @@ public class EventPublicController {
     @GetMapping("/{id}")
     EventFullDto getEventById(@PathVariable long id, HttpServletRequest request) throws EventNotFound {
         RequestInfo info = new RequestInfo(request.getRemoteAddr(), request.getRequestURI());
-        return eventService.getEventById(id, info);
+        return eventService.getPublishedEventById(id, info);
     }
 }

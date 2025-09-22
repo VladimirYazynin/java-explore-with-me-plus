@@ -1,13 +1,16 @@
 package ru.practicum.ewm.event;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.ewm.event.dto.EventFilter;
 import ru.practicum.ewm.event.dto.EventFullDto;
 import ru.practicum.ewm.event.dto.UpdateEventAdminRequest;
-import ru.practicum.ewm.event.exceptions.EventConditionException;
+import ru.practicum.ewm.event.exceptions.EventStateException;
 import ru.practicum.ewm.event.exceptions.EventNotFound;
 import ru.practicum.ewm.event.interfaces.EventService;
+import ru.practicum.ewm.exception.model.NotFoundException;
+import ru.practicum.statistics.RequestInfo;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -43,8 +46,10 @@ public class EventAdminController {
     @PatchMapping("/{eventId}")
     EventFullDto patchEvent(
             @PathVariable Long eventId,
-            @RequestBody UpdateEventAdminRequest dto
-    ) throws EventNotFound, EventConditionException {
-        return eventService.updateEvent(eventId, dto);
+            @RequestBody UpdateEventAdminRequest dto,
+            HttpServletRequest request
+    ) throws NotFoundException, EventStateException {
+        RequestInfo info = new RequestInfo(request.getRemoteAddr(), request.getRequestURI());
+        return eventService.updateEvent(eventId, dto, info);
     }
 }

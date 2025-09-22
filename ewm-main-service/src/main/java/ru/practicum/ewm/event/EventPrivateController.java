@@ -1,14 +1,18 @@
 package ru.practicum.ewm.event;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.ewm.event.dto.*;
-import ru.practicum.ewm.event.exceptions.EventConditionException;
+import ru.practicum.ewm.event.exceptions.EventStateException;
 import ru.practicum.ewm.event.exceptions.EventNotFound;
 import ru.practicum.ewm.event.exceptions.EventParticipantNotExists;
 import ru.practicum.ewm.event.interfaces.EventService;
+import ru.practicum.ewm.exception.model.NotExistsException;
+import ru.practicum.ewm.exception.model.NotFoundException;
 import ru.practicum.ewm.request.dto.ParticipationRequestDto;
+import ru.practicum.statistics.RequestInfo;
 
 import java.util.List;
 
@@ -37,7 +41,7 @@ public class EventPrivateController {
     @ResponseStatus(CREATED)
     EventFullDto postNewEvent(@PathVariable Long userId,
                               @RequestBody @Valid NewEventDto newEventDto
-    ) throws EventConditionException {
+    ) throws EventStateException, NotFoundException {
         return eventService.addNewEvent(userId, newEventDto);
     }
 
@@ -53,9 +57,11 @@ public class EventPrivateController {
     EventFullDto patchEvent(
             @PathVariable Long userId,
             @PathVariable Long eventId,
-            @RequestBody UpdateEventUserRequest updateEventUserRequest
-    ) throws EventNotFound, EventConditionException {
-        return eventService.updateEvent(userId, eventId, updateEventUserRequest);
+            @RequestBody UpdateEventUserRequest updateEventUserRequest,
+            HttpServletRequest request
+    ) throws EventNotFound, EventStateException, NotExistsException {
+        RequestInfo info = new RequestInfo(request.getRemoteAddr(), request.getRequestURI());
+        return eventService.updateEvent(userId, eventId, updateEventUserRequest,info);
     }
 
     @GetMapping("/{userId}/events/{eventId}/requests")
@@ -71,7 +77,7 @@ public class EventPrivateController {
             @PathVariable Long userId,
             @PathVariable Long eventId,
             @RequestBody EventRequestStatusUpdateRequest eventRequestStatusUpdateRequest
-    ) throws EventNotFound, EventParticipantNotExists {
+    ) throws EventNotFound, NotExistsException {
         return eventService.updateParticipationRequestInfo(userId, eventId, eventRequestStatusUpdateRequest);
     }
 }

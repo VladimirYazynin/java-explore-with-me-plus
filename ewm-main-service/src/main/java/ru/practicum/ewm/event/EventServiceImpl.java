@@ -1,34 +1,30 @@
 package ru.practicum.ewm.event;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import ru.practicum.ewm.category.Category;
 import ru.practicum.ewm.category.CategoryRepository;
-import ru.practicum.ewm.client.StatClient;
 import ru.practicum.ewm.event.dto.EventFilter;
 import ru.practicum.ewm.event.dto.EventFullDto;
 import ru.practicum.ewm.event.dto.EventRequestStatusUpdateRequest;
 import ru.practicum.ewm.event.dto.EventRequestStatusUpdateResult;
 import ru.practicum.ewm.event.dto.EventShortDto;
 import ru.practicum.ewm.event.dto.NewEventDto;
-import ru.practicum.ewm.event.dto.RequestInfo;
+import ru.practicum.statistics.RequestInfo;
 import ru.practicum.ewm.event.dto.UpdateEventAdminRequest;
 import ru.practicum.ewm.event.dto.UpdateEventUserRequest;
-import ru.practicum.ewm.event.exceptions.EventConditionException;
+import ru.practicum.ewm.event.exceptions.EventStateException;
 import ru.practicum.ewm.event.exceptions.EventNotFound;
 import ru.practicum.ewm.event.exceptions.EventParticipantNotExists;
 import ru.practicum.ewm.event.interfaces.EventMapper;
 import ru.practicum.ewm.event.interfaces.EventService;
-import ru.practicum.ewm.exception.model.ConflictException;
-import ru.practicum.ewm.exception.model.ExceptionStatus;
 import ru.practicum.ewm.exception.model.NotFoundException;
-import ru.practicum.ewm.exception.model.NotPublishedException;
 import ru.practicum.ewm.request.dto.ParticipationRequestDto;
 import ru.practicum.ewm.request.model.ParticipationRequest;
 import ru.practicum.ewm.request.repository.RequestRepository;
 import ru.practicum.ewm.user.model.User;
 import ru.practicum.ewm.user.repository.UserRepository;
+import ru.practicum.statistics.StatsClient;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -48,40 +44,27 @@ public class EventServiceImpl implements EventService {
     private final CategoryRepository categoryRepository;
     private final UserRepository userRepository;
     private final RequestRepository requestRepository;
-    private final StatClient statClient;
+    private final StatsClient statClient;
     private final EventMapper eventMapper;
-    @Value("${stats-service.url}")
-    private String statServiceUrl;
-    @Value("${main-service.name}")
-    private String appName;
 
     @Override
-    public EventFullDto getEventById(long eventId, RequestInfo info) throws EventNotFound, NotPublishedException {
-        Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new EventNotFound(
-                        "Событие не найдено",
-                        "id нет в базе",
-                        ExceptionStatus.NOT_FOUND,
-                        LocalDateTime.now()
-                ));
-        if (event.getState() != PUBLISHED) {
-            throw new NotPublishedException(
-                    "Событие ещё не опубликовано",
-                    "Событие проходит модерацию",
-                    ExceptionStatus.BAD_REQUEST,
-                    LocalDateTime.now()
-            );
-        }
-
+    public EventFullDto getPublishedEventById(long eventId, RequestInfo info) throws EventNotFound {
+        Event event = eventRepository.findByIdAndState(eventId, PUBLISHED)
+                .orElseThrow(() -> new EventNotFound("Событие не найдено", "id нет в базе или не опубликовано"));
         List<ParticipationRequest> requests = requestRepository.findAllByEventIdAndStatus(eventId, CONFIRMED);
         // запрос в сервис статистики
-        long views = 0;
+        long views = statClient.get(event.getPublishedOn(), LocalDateTime.now(), info, false).getHits();
+        statClient.post(info);
 
         return eventMapper.mapToEventFullDto(event, views, requests.size());
     }
 
     @Override
     public List<EventShortDto> findPublishedEvents(EventFilter filter, RequestInfo info) {
+
+
+
+        statClient.post(info);
         return null;
     }
 
@@ -91,14 +74,9 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    public EventFullDto updateEvent(Long eventId, UpdateEventAdminRequest dto) throws EventNotFound, EventConditionException, ConflictException, NotFoundException {
+    public EventFullDto updateEvent(Long eventId, UpdateEventAdminRequest dto, RequestInfo info) throws NotFoundException, EventStateException {
         Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new EventNotFound(
-                        "Событие не найдено",
-                        "id нет в базе",
-                        ExceptionStatus.NOT_FOUND,
-                        LocalDateTime.now()
-                ));
+                .orElseThrow(() -> new EventNotFound("Событие не найдено", "id нет в базе"));
         if (dto.getEventDate() != null) {
             event.setEventDate(dto.getEventDate());
         }
@@ -109,30 +87,15 @@ public class EventServiceImpl implements EventService {
                     event.setState(PUBLISHED);
                     event.setPublishedOn(publishedOn);
                 } else {
-                    throw new ConflictException(
-                            "Не возможно опубликовать событие",
-                            "До начала события осталось менее 1 часа",
-                            ExceptionStatus.CONFLICT,
-                            LocalDateTime.now()
-                    );
+                    throw new EventStateException("Не возможно опубликовать событие", "До начала осталось менее 1 часа");
                 }
             } else {
-                throw new ConflictException(
-                        "Нельзя опубликовать данное событие",
-                        "Событие находится не в состоянии ожидания",
-                        ExceptionStatus.CONFLICT,
-                        LocalDateTime.now()
-                );
+                throw new EventStateException("Нельзя опубликовать данное событие", "Событие находится не в состоянии ожидания");
             }
         }
         if (dto.getStateAction() == REJECT_EVENT) {
             if (event.getState() == PUBLISHED) {
-                throw new ConflictException(
-                        "Нельзя отменить данное событие",
-                        "Событие уже опубликовано",
-                        ExceptionStatus.CONFLICT,
-                        LocalDateTime.now()
-                );
+                throw new EventStateException("Нельзя отменить данное событие", "Событие уже опубликовано");
             } else {
                 event.setState(CANCELED);
             }
@@ -143,12 +106,7 @@ public class EventServiceImpl implements EventService {
         }
         if (dto.getCategory() != null) {
             Category newCategory = categoryRepository.findById(dto.getCategory())
-                    .orElseThrow(() -> new NotFoundException(
-                            "Категория не найдена",
-                            "id нет в базе",
-                            ExceptionStatus.NOT_FOUND,
-                            LocalDateTime.now()
-                    ));
+                    .orElseThrow(() -> new NotFoundException("Категория не найдена", "id нет в базе"));
             event.setCategory(newCategory);
         }
         if (dto.getDescription() != null) {
@@ -170,14 +128,14 @@ public class EventServiceImpl implements EventService {
             event.setTitle(dto.getTitle());
         }
         List<ParticipationRequest> requests = requestRepository.findAllByEventIdAndStatus(eventId, CONFIRMED);
-        List<StatResponse> views = statClient.getEventStat(new String[]{"/events/" + eventId});
+        long views = statClient.get(event.getPublishedOn(),LocalDateTime.now(),info,false).getHits();
 
         eventRepository.save(event);
-        return eventMapper.mapToEventFullDto(event, requests.size(), views.size());
+        return eventMapper.mapToEventFullDto(event, requests.size(), views);
     }
 
     @Override
-    public EventFullDto updateEvent(Long userId, Long eventId, UpdateEventUserRequest dto) throws EventNotFound, EventConditionException {
+    public EventFullDto updateEvent(Long userId, Long eventId, UpdateEventUserRequest dto,RequestInfo info) throws EventNotFound, EventStateException {
         return null;
     }
 
@@ -187,21 +145,11 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    public EventFullDto addNewEvent(Long userId, NewEventDto newEventDto) throws EventConditionException, NotFoundException {
+    public EventFullDto addNewEvent(Long userId, NewEventDto newEventDto) throws EventStateException, NotFoundException {
         User initiator = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException(
-                        "Пользователь не найден",
-                        "id нет в базе",
-                        ExceptionStatus.NOT_FOUND,
-                        LocalDateTime.now()
-                ));
+                .orElseThrow(() -> new NotFoundException("Пользователь не найден", "id нет в базе"));
         Category category = categoryRepository.findById(newEventDto.getCategory())
-                .orElseThrow(() -> new NotFoundException(
-                        "Категория не найдена",
-                        "id нет в базе",
-                        ExceptionStatus.NOT_FOUND,
-                        LocalDateTime.now()
-                ));
+                .orElseThrow(() -> new NotFoundException("Категория не найдена", "id нет в базе"));
         Event newEvent = eventMapper.mapToEvent(newEventDto, category);
         newEvent.setInitiator(initiator);
         newEvent.setState(PENDING);
