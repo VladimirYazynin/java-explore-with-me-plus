@@ -4,6 +4,7 @@ import ru.practicum.ewm.event.dto.*;
 import ru.practicum.ewm.event.exceptions.EventStateException;
 import ru.practicum.ewm.event.exceptions.EventNotFound;
 import ru.practicum.ewm.event.exceptions.EventParticipantNotExists;
+import ru.practicum.ewm.exception.model.ConflictException;
 import ru.practicum.ewm.exception.model.NotExistsException;
 import ru.practicum.ewm.exception.model.NotFoundException;
 import ru.practicum.ewm.request.dto.ParticipationRequestDto;
@@ -86,7 +87,7 @@ public interface EventService {
             Long userId,
             Long eventId,
             UpdateEventUserRequest dto,
-            RequestInfo info) throws EventStateException, EventNotFound, NotExistsException;
+            RequestInfo info) throws EventStateException, EventNotFound, NotFoundException, NotExistsException, ConflictException;
 
     /**
      * <h4> Private: GET /users/{userId}/events/{eventId}/requests</h4>

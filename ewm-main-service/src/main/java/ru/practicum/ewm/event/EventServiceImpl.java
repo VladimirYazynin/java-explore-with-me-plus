@@ -10,6 +10,7 @@ import ru.practicum.ewm.event.dto.EventRequestStatusUpdateRequest;
 import ru.practicum.ewm.event.dto.EventRequestStatusUpdateResult;
 import ru.practicum.ewm.event.dto.EventShortDto;
 import ru.practicum.ewm.event.dto.NewEventDto;
+import ru.practicum.ewm.exception.model.ConflictException;
 import ru.practicum.statistics.RequestInfo;
 import ru.practicum.ewm.event.dto.UpdateEventAdminRequest;
 import ru.practicum.ewm.event.dto.UpdateEventUserRequest;
@@ -33,8 +34,7 @@ import static ru.practicum.ewm.event.State.CANCELED;
 import static ru.practicum.ewm.event.State.CONFIRMED;
 import static ru.practicum.ewm.event.State.PENDING;
 import static ru.practicum.ewm.event.State.PUBLISHED;
-import static ru.practicum.ewm.event.StateAction.PUBLISH_EVENT;
-import static ru.practicum.ewm.event.StateAction.REJECT_EVENT;
+import static ru.practicum.ewm.event.StateAction.*;
 
 @Service
 @RequiredArgsConstructor
@@ -87,7 +87,7 @@ public class EventServiceImpl implements EventService {
                     event.setState(PUBLISHED);
                     event.setPublishedOn(publishedOn);
                 } else {
-                    throw new EventStateException("Не возможно опубликовать событие", "До начала осталось менее 1 часа");
+                    throw new EventStateException("Невозможно опубликовать событие", "До начала осталось менее 1 часа");
                 }
             } else {
                 throw new EventStateException("Нельзя опубликовать данное событие", "Событие находится не в состоянии ожидания");
@@ -135,8 +135,65 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    public EventFullDto updateEvent(Long userId, Long eventId, UpdateEventUserRequest dto,RequestInfo info) throws EventNotFound, EventStateException {
-        return null;
+    public EventFullDto updateEvent(Long userId, Long eventId, UpdateEventUserRequest dto,RequestInfo info) throws NotFoundException, EventStateException, ConflictException {
+        User initiator = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("Пользователь не найден", "id нет в базе"));
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new NotFoundException("Событие не найдено", "id нет в базе"));
+        if (!event.getInitiator().getId().equals(userId)) {
+            throw new ConflictException("Вы не можете обновить это событие", "У вас недостаточно прав");
+        }
+        if (event.getState() == PENDING || event.getState() == CANCELED) {
+            if (dto.getEventDate() != null) {
+                if (dto.getEventDate().isAfter(LocalDateTime.now().plusHours(2))) {
+                    event.setEventDate(dto.getEventDate());
+                } else {
+                    throw new ConflictException("Вы не можете обновить время начала события", "До начала события осталось менее двух часов");
+                }
+                if (dto.getAnnotation() != null) {
+                    event.setAnnotation(dto.getAnnotation());
+                }
+                if (dto.getCategory() != null) {
+                    Category newCategory = categoryRepository.findById(dto.getCategory())
+                                    .orElseThrow(() -> new NotFoundException("Категория не найдена", "id нет в базе"));
+                    event.setCategory(newCategory);
+                }
+                if (dto.getDescription() != null) {
+                    event.setDescription(dto.getDescription());
+                }
+                if (dto.getLocation() != null) {
+                    event.setLocation(dto.getLocation());
+                }
+                if (dto.getPaid() != null) {
+                    event.setPaid(dto.getPaid());
+                }
+                if (dto.getParticipantLimit() != null) {
+                    event.setParticipantLimit(dto.getParticipantLimit());
+                }
+                if (dto.getRequestModeration() != null) {
+                    event.setRequestModeration(dto.getRequestModeration());
+                }
+                if (dto.getStateAction() != null) {
+                    if (dto.getStateAction() == SEND_TO_REVIEW) {
+                        event.setState(PENDING);
+                    }
+                    if (dto.getStateAction() == CANCEL_REVIEW) {
+                        event.setState(CANCELED);
+                    }
+                }
+                if (dto.getTitle() != null) {
+                    event.setTitle(dto.getTitle());
+                }
+            }
+
+        } else {
+            throw new ConflictException("Невозможно обновить событие", "Событие не находится в статусе ожидания или отмены");
+        }
+        eventRepository.save(event);
+        List<ParticipationRequest> requests = requestRepository.findAllByEventIdAndStatus(eventId, CONFIRMED);
+        //запрос на кол-во просмотров в сервис статистики
+        long views = 0;
+        return eventMapper.mapToEventFullDto(event, requests.size(), views);
     }
 
     @Override
