@@ -56,7 +56,7 @@ create table if not exists compilations
 
 create table if not exists compilations_events
 (
-    events_id bigint not null references events (id) on delete cascade ,
-    compilation_id bigint not null references compilations (id) on delete cascade
+    events_id bigint not null references events (id) on delete cascade,
+    compilation_id bigint not null references compilations (id) on delete cascade,
     primary key (events_id, compilation_id)
 );
