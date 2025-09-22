@@ -4,6 +4,7 @@ import ru.practicum.ewm.event.dto.*;
 import ru.practicum.ewm.event.exceptions.EventConditionException;
 import ru.practicum.ewm.event.exceptions.EventNotFound;
 import ru.practicum.ewm.event.exceptions.EventParticipantNotExists;
+import ru.practicum.ewm.exception.model.ConflictException;
 import ru.practicum.ewm.exception.model.NotFoundException;
 import ru.practicum.ewm.exception.model.NotPublishedException;
 import ru.practicum.ewm.request.dto.ParticipationRequestDto;
@@ -17,7 +18,7 @@ public interface EventService {
 
     List<EventFullDto> findAllEvents(EventFilter filter);
 
-    EventFullDto updateEvent(Long eventId, UpdateEventAdminRequest dto) throws EventNotFound, EventConditionException;
+    EventFullDto updateEvent(Long eventId, UpdateEventAdminRequest dto) throws EventNotFound, EventConditionException, ConflictException, NotFoundException;
 
     List<EventShortDto> findEventsAddedByUser(Long userId, EventFilter filter);
 
