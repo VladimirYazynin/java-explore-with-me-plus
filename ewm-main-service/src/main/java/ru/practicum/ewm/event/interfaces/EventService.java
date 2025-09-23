@@ -1,9 +1,16 @@
 package ru.practicum.ewm.event.interfaces;
 
-import ru.practicum.ewm.event.dto.*;
-import ru.practicum.ewm.event.exceptions.EventStateException;
+import ru.practicum.ewm.event.dto.EventFilter;
+import ru.practicum.ewm.event.dto.EventFullDto;
+import ru.practicum.ewm.event.dto.EventRequestStatusUpdateRequest;
+import ru.practicum.ewm.event.dto.EventRequestStatusUpdateResult;
+import ru.practicum.ewm.event.dto.EventShortDto;
+import ru.practicum.ewm.event.dto.NewEventDto;
+import ru.practicum.ewm.event.dto.UpdateEventAdminRequest;
+import ru.practicum.ewm.event.dto.UpdateEventUserRequest;
 import ru.practicum.ewm.event.exceptions.EventNotFound;
 import ru.practicum.ewm.event.exceptions.EventParticipantNotExists;
+import ru.practicum.ewm.event.exceptions.EventStateException;
 import ru.practicum.ewm.exception.model.ConflictException;
 import ru.practicum.ewm.exception.model.NotExistsException;
 import ru.practicum.ewm.exception.model.NotFoundException;
@@ -107,6 +114,6 @@ public interface EventService {
     EventRequestStatusUpdateResult updateParticipationRequestInfo(
             Long userId,
             Long eventId,
-            EventRequestStatusUpdateRequest dto) throws EventNotFound, EventParticipantNotExists,NotExistsException;
+            EventRequestStatusUpdateRequest dto) throws NotFoundException, EventParticipantNotExists, NotExistsException, ConflictException;
 
 }

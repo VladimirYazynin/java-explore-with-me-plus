@@ -10,30 +10,29 @@ import ru.practicum.ewm.event.dto.EventRequestStatusUpdateRequest;
 import ru.practicum.ewm.event.dto.EventRequestStatusUpdateResult;
 import ru.practicum.ewm.event.dto.EventShortDto;
 import ru.practicum.ewm.event.dto.NewEventDto;
-import ru.practicum.ewm.exception.model.ConflictException;
-import ru.practicum.statistics.RequestInfo;
 import ru.practicum.ewm.event.dto.UpdateEventAdminRequest;
 import ru.practicum.ewm.event.dto.UpdateEventUserRequest;
-import ru.practicum.ewm.event.exceptions.EventStateException;
 import ru.practicum.ewm.event.exceptions.EventNotFound;
 import ru.practicum.ewm.event.exceptions.EventParticipantNotExists;
+import ru.practicum.ewm.event.exceptions.EventStateException;
 import ru.practicum.ewm.event.interfaces.EventMapper;
 import ru.practicum.ewm.event.interfaces.EventService;
+import ru.practicum.ewm.exception.model.ConflictException;
 import ru.practicum.ewm.exception.model.NotFoundException;
 import ru.practicum.ewm.request.dto.ParticipationRequestDto;
 import ru.practicum.ewm.request.model.ParticipationRequest;
 import ru.practicum.ewm.request.repository.RequestRepository;
 import ru.practicum.ewm.user.model.User;
 import ru.practicum.ewm.user.repository.UserRepository;
+import ru.practicum.statistics.RequestInfo;
 import ru.practicum.statistics.StatsClient;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
-import static ru.practicum.ewm.event.State.CANCELED;
-import static ru.practicum.ewm.event.State.CONFIRMED;
-import static ru.practicum.ewm.event.State.PENDING;
-import static ru.practicum.ewm.event.State.PUBLISHED;
+import static ru.practicum.ewm.event.State.*;
 import static ru.practicum.ewm.event.StateAction.*;
 
 @Service
@@ -61,7 +60,6 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public List<EventShortDto> findPublishedEvents(EventFilter filter, RequestInfo info) {
-
 
 
         statClient.post(info);
@@ -128,14 +126,14 @@ public class EventServiceImpl implements EventService {
             event.setTitle(dto.getTitle());
         }
         List<ParticipationRequest> requests = requestRepository.findAllByEventIdAndStatus(eventId, CONFIRMED);
-        long views = statClient.get(event.getPublishedOn(),LocalDateTime.now(),info,false).getHits();
+        long views = statClient.get(event.getPublishedOn(), LocalDateTime.now(), info, false).getHits();
 
         eventRepository.save(event);
         return eventMapper.mapToEventFullDto(event, requests.size(), views);
     }
 
     @Override
-    public EventFullDto updateEvent(Long userId, Long eventId, UpdateEventUserRequest dto,RequestInfo info) throws NotFoundException, EventStateException, ConflictException {
+    public EventFullDto updateEvent(Long userId, Long eventId, UpdateEventUserRequest dto, RequestInfo info) throws NotFoundException, EventStateException, ConflictException {
         User initiator = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("Пользователь не найден", "id нет в базе"));
         Event event = eventRepository.findById(eventId)
@@ -155,7 +153,7 @@ public class EventServiceImpl implements EventService {
                 }
                 if (dto.getCategory() != null) {
                     Category newCategory = categoryRepository.findById(dto.getCategory())
-                                    .orElseThrow(() -> new NotFoundException("Категория не найдена", "id нет в базе"));
+                            .orElseThrow(() -> new NotFoundException("Категория не найдена", "id нет в базе"));
                     event.setCategory(newCategory);
                 }
                 if (dto.getDescription() != null) {
@@ -227,7 +225,43 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    public EventRequestStatusUpdateResult updateParticipationRequestInfo(Long userId, Long eventId, EventRequestStatusUpdateRequest dto) throws EventNotFound, EventParticipantNotExists {
+    public EventRequestStatusUpdateResult updateParticipationRequestInfo(Long userId, Long eventId, EventRequestStatusUpdateRequest dto) throws NotFoundException, EventParticipantNotExists, ConflictException {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("Пользователь не найден", "id нет в базе"));
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new EventNotFound("Событие не найдено", "id нет в базе"));
+        if (!event.getInitiator().getId().equals(userId)) {
+            throw new ConflictException("Вы не можете менять статус заявок данного мероприятия", "У вас не достаточно прав");
+        }
+
+        if (event.getRequestModeration() || event.getParticipantLimit() > 0) {
+            List<ParticipationRequest> participationRequests = requestRepository.findAllByEventId(eventId);
+            Map<Long, ParticipationRequest> pendingRequests = participationRequests.stream()
+                    .filter(request -> request.getStatus() == PENDING)
+                    .collect(Collectors.toMap(
+                            ParticipationRequest::getId,
+                            request -> request
+                    ));
+
+            if (dto.getStatus() == Status.CONFIRMED) {
+                List<ParticipationRequest> confirmedRequests = participationRequests.stream()
+                        .filter(request -> request.getStatus() == CONFIRMED)
+                        .toList();
+                if (confirmedRequests.size() >= event.getParticipantLimit()) {
+                    throw new ConflictException("Нельзя принять заявку на участие", "Достигнут лимит участников");
+                }
+            }
+            if (dto.getStatus() == Status.REJECTED) {
+                for (Long id : dto.getRequestIds()) {
+                    if (pendingRequests.containsKey(id)) {
+
+                    } else {
+                        throw new ConflictException("Нельзя отменить заявку", "Заявка с id: " + id + ", находится не в состоянии ожидания");
+                    }
+                }
+            }
+        }
+
         return null;
     }
 }
