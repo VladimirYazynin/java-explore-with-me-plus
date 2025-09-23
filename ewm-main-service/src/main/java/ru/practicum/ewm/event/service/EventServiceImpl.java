@@ -9,7 +9,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import ru.practicum.ewm.EndpointHitDto;
 import ru.practicum.ewm.ViewStatsDto;
-import ru.practicum.ewm.category.model.Category;
 import ru.practicum.ewm.category.repository.CategoryRepository;
 import ru.practicum.ewm.enums.Sort;
 import ru.practicum.ewm.enums.State;
