@@ -234,49 +234,78 @@ public class EventServiceImpl implements EventService {
     public List<EventShortDto> searchEvents(String text, Integer[] categories, Boolean paid, LocalDateTime rangeStart,
                                             LocalDateTime rangeEnd, Boolean onlyAvailable, Sort sort,
                                             int from, int size, HttpServletRequest request) {
-        log.debug("searchEvents({}, {}, {}, {}, {}, {}, {}, {}, {})",
+        log.debug("searchEvents(text={}, categories={}, paid={}, rangeStart={}, rangeEnd={}, onlyAvailable={}, sort={}, from={}, size={})",
                 text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, from, size);
         PageRequest page = PageRequest.of(from, size);
-        Iterable<Event> events;
         BooleanBuilder builder = new BooleanBuilder();
+        // Фильтр: только опубликованные события
+        builder.and(QEvent.event.state.eq(PUBLISHED));
+        // Фильтр по тексту (в аннотации или описании)
         if (Objects.nonNull(text)) {
             BooleanExpression byAnnotation = QEvent.event.annotation.containsIgnoreCase(text);
             BooleanExpression byDescription = QEvent.event.description.containsIgnoreCase(text);
             builder.and(byAnnotation.or(byDescription));
         }
+        // Фильтр по оплате
         if (Objects.nonNull(paid)) {
-            BooleanExpression byPaid = QEvent.event.paid.eq(paid);
-            builder.and(byPaid);
+            builder.and(QEvent.event.paid.eq(paid));
         }
-        if (Objects.nonNull(categories)) {
+        // Фильтр по категориям
+        if (Objects.nonNull(categories) && categories.length > 0) {
             builder.and(QEvent.event.category.id.in(categories));
         }
-        LocalDateTime startDate = rangeStart != null ? rangeStart : LocalDateTime.now();
-        LocalDateTime endDate = rangeEnd != null ? rangeEnd : null;
+        // Фильтр по датам
+        LocalDateTime startDate = Optional.ofNullable(rangeStart).orElse(LocalDateTime.now());
+        LocalDateTime endDate = rangeEnd;
         if (endDate != null) {
             if (endDate.isBefore(startDate)) {
                 throw new ValidationException("Конечная дата не может быть раньше начальной");
             }
             builder.and(QEvent.event.eventDate.between(startDate, endDate));
         } else {
-            builder.and(QEvent.event.eventDate.after(startDate));
+            // Используем >= (goe), чтобы включить события, начинающиеся прямо сейчас
+            builder.and(QEvent.event.eventDate.goe(startDate));
         }
-        events = eventRepository.findAll(builder, page);
+        // Фильтр: только если есть свободные места (если onlyAvailable=true)
+        if (Boolean.TRUE.equals(onlyAvailable)) {
+            builder.and(QEvent.event.participantLimit.gt(QEvent.event.confirmedRequests));
+        }
+        // Получаем события из репозитория
+        Iterable<Event> events = eventRepository.findAll(builder, page);
         sendData(request);
+        // Маппим события в DTO
         List<EventShortDto> shortEvents = new ArrayList<>();
         for (Event event : events) {
             shortEvents.add(eventMapper.toEventShortDto(receiveData(event)));
         }
-        if (sort.equals(VIEWS)) {
-            shortEvents = shortEvents.stream()
-                    .sorted(Comparator.comparing(EventShortDto::getViews)).collect(Collectors.toList());
+        // Логируем даты перед сортировкой для отладки
+        log.debug("Даты событий перед сортировкой: {}",
+                shortEvents.stream().map(EventShortDto::getEventDate).collect(Collectors.toList()));
+
+        // Сортировка
+        if (sort != null) {
+            if (sort.equals(VIEWS)) {
+                shortEvents = shortEvents.stream()
+                        .sorted(Comparator.comparing(EventShortDto::getViews))
+                        .collect(Collectors.toList());
+            } else if (sort.equals(EVENT_DATE)) {
+                shortEvents = shortEvents.stream()
+                        .filter(event -> event.getEventDate() != null) // Защита от null
+                        .sorted((e1, e2) -> {
+                            try {
+                                LocalDateTime d1 = LocalDateTime.parse(e1.getEventDate(), formatter);
+                                LocalDateTime d2 = LocalDateTime.parse(e2.getEventDate(), formatter);
+                                return d1.compareTo(d2);
+                            } catch (Exception ex) {
+                                log.warn("Ошибка парсинга даты при сортировке: e1={}, e2={}", e1.getEventDate(), e2.getEventDate(), ex);
+                                // fallback: сортируем по ID, чтобы избежать падения
+                                return e1.getId().compareTo(e2.getId());
+                            }
+                        })
+                        .collect(Collectors.toList());
+            }
         }
-        if (sort.equals(EVENT_DATE)) {
-            shortEvents = shortEvents.stream()
-                    .sorted(Comparator.comparing(event -> LocalDateTime.parse(event.getEventDate(), formatter)))
-                    .collect(Collectors.toList());
-        }
-        log.info("Возвращён список событий по запросу пользователя: {}", shortEvents);
+        log.info("Возвращён список событий по запросу пользователя. Количество: {}", shortEvents.size());
         return shortEvents;
     }
 
