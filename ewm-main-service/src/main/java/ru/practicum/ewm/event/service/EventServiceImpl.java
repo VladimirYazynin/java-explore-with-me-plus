@@ -61,7 +61,17 @@ public class EventServiceImpl implements EventService {
         Event thisEvent = eventMapper.toEvent(event);
         dateValidation(LocalDateTime.parse(event.getEventDate(), formatter));
         thisEvent.setPaid(event.getPaid() != null ? event.getPaid() : false);
-        thisEvent.setParticipantLimit(event.getParticipantLimit() != null ? event.getParticipantLimit() : 0);
+        // ДОБАВЛЕНА ПРОВЕРКА НА ОТРИЦАТЕЛЬНЫЙ LIMIT
+        thisEvent.setParticipantLimit(
+                Optional.ofNullable(event.getParticipantLimit())
+                        .map(limit -> {
+                            if (limit < 0) {
+                                throw new ValidationException("Лимит участников не может быть отрицательным");
+                            }
+                            return limit;
+                        })
+                        .orElse(0)
+        );
         thisEvent.setRequestModeration(event.getRequestModeration() != null ? event.getRequestModeration() : true);
         thisEvent.setCreatedOn(LocalDateTime.now());
         thisEvent.setInitiator(user);
@@ -107,6 +117,10 @@ public class EventServiceImpl implements EventService {
         }
         if (!thisEvent.getInitiator().equals(user)) {
             throw new AccessException("Нет доступа");
+        }
+        // ДОБАВЛЕНА ПРОВЕРКА НА ОТРИЦАТЕЛЬНЫЙ LIMIT
+        if (event.getParticipantLimit() != null && event.getParticipantLimit() < 0) {
+            throw new ValidationException("Лимит участников не может быть отрицательным");
         }
         Event eventToSave = fieldsChecker(event, thisEvent);
         if (event.getStateAction() != null) {
@@ -338,7 +352,11 @@ public class EventServiceImpl implements EventService {
         if (eventToUpdate.getPaid() != null) {
             foundEvent.setPaid(eventToUpdate.getPaid());
         }
+        // ДОБАВЛЕНА ПРОВЕРКА НА ОТРИЦАТЕЛЬНЫЙ LIMIT
         if (eventToUpdate.getParticipantLimit() != null) {
+            if (eventToUpdate.getParticipantLimit() < 0) {
+                throw new ValidationException("Лимит участников не может быть отрицательным");
+            }
             foundEvent.setParticipantLimit(eventToUpdate.getParticipantLimit());
         }
         if (eventToUpdate.getRequestModeration() != null) {
