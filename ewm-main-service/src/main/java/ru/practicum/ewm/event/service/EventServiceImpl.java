@@ -228,7 +228,7 @@ public class EventServiceImpl implements EventService {
         if (Objects.nonNull(text)) {
             BooleanExpression byAnnotation = QEvent.event.annotation.containsIgnoreCase(text);
             BooleanExpression byDescription = QEvent.event.description.containsIgnoreCase(text);
-            builder.and(byAnnotation).or(byDescription);
+            builder.and(byAnnotation.or(byDescription));
         }
         if (Objects.nonNull(paid)) {
             BooleanExpression byPaid = QEvent.event.paid.eq(paid);
@@ -247,11 +247,10 @@ public class EventServiceImpl implements EventService {
         } else {
             builder.and(QEvent.event.eventDate.after(startDate));
         }
-            events = eventRepository.findAll(builder, page);
-
+        events = eventRepository.findAll(builder, page);
         sendData(request);
         List<EventShortDto> shortEvents = new ArrayList<>();
-        for (Event event: events) {
+        for (Event event : events) {
             shortEvents.add(eventMapper.toEventShortDto(receiveData(event)));
         }
         if (sort.equals(VIEWS)) {
