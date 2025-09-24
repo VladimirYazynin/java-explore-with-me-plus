@@ -1,5 +1,6 @@
 package ru.practicum.ewm.event.model;
 
+import com.querydsl.core.annotations.Generated;
 import com.querydsl.core.types.Path;
 import com.querydsl.core.types.PathMetadata;
 import com.querydsl.core.types.dsl.*;
@@ -7,7 +8,6 @@ import ru.practicum.ewm.category.model.QCategory;
 import ru.practicum.ewm.enums.State;
 import ru.practicum.ewm.user.model.QUser;
 
-import javax.annotation.processing.Generated;
 import java.time.LocalDateTime;
 
 import static com.querydsl.core.types.PathMetadataFactory.forVariable;
