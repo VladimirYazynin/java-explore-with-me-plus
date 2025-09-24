@@ -2,6 +2,7 @@ package ru.practicum.ewm.event;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import ru.practicum.ViewStatsDto;
 import ru.practicum.ewm.category.Category;
 import ru.practicum.ewm.category.CategoryRepository;
 import ru.practicum.ewm.event.dto.EventFilter;
@@ -10,29 +11,31 @@ import ru.practicum.ewm.event.dto.EventRequestStatusUpdateRequest;
 import ru.practicum.ewm.event.dto.EventRequestStatusUpdateResult;
 import ru.practicum.ewm.event.dto.EventShortDto;
 import ru.practicum.ewm.event.dto.NewEventDto;
+import ru.practicum.ewm.exception.model.ConflictException;
+import ru.practicum.statistics.RequestInfo;
 import ru.practicum.ewm.event.dto.UpdateEventAdminRequest;
 import ru.practicum.ewm.event.dto.UpdateEventUserRequest;
+import ru.practicum.ewm.event.exceptions.EventStateException;
 import ru.practicum.ewm.event.exceptions.EventNotFound;
 import ru.practicum.ewm.event.exceptions.EventParticipantNotExists;
-import ru.practicum.ewm.event.exceptions.EventStateException;
 import ru.practicum.ewm.event.interfaces.EventMapper;
 import ru.practicum.ewm.event.interfaces.EventService;
-import ru.practicum.ewm.exception.model.ConflictException;
 import ru.practicum.ewm.exception.model.NotFoundException;
 import ru.practicum.ewm.request.dto.ParticipationRequestDto;
 import ru.practicum.ewm.request.model.ParticipationRequest;
 import ru.practicum.ewm.request.repository.RequestRepository;
 import ru.practicum.ewm.user.model.User;
 import ru.practicum.ewm.user.repository.UserRepository;
-import ru.practicum.statistics.RequestInfo;
 import ru.practicum.statistics.StatsClient;
 
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
-import static ru.practicum.ewm.event.State.*;
+import static ru.practicum.ewm.event.State.CANCELED;
+import static ru.practicum.ewm.event.State.CONFIRMED;
+import static ru.practicum.ewm.event.State.PENDING;
+import static ru.practicum.ewm.event.State.PUBLISHED;
 import static ru.practicum.ewm.event.StateAction.*;
 
 @Service
@@ -60,10 +63,29 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public List<EventShortDto> findPublishedEvents(EventFilter filter, RequestInfo info) {
-
-
-        statClient.post(info);
-        return null;
+        List<EventShortDto> eventShortDto = new ArrayList<>();
+        Map<String, Event> eventsByUri = new HashMap<>();
+        filter.addStates(PUBLISHED);
+        LocalDateTime earliest = LocalDateTime.now();
+        for (Event e : eventRepository.findAll(filter.getPredicate())) {
+            eventsByUri.put(info.getUri(e.getId()), e);
+            if (earliest.isAfter(e.getPublishedOn())) {
+                earliest = e.getPublishedOn();
+            }
+        }
+        if (!eventsByUri.isEmpty()) {
+            List<ViewStatsDto> views = statClient.get(earliest, LocalDateTime.now(), eventsByUri.keySet().toArray(new String[0]), false);
+            for (ViewStatsDto view : views) {
+                eventShortDto.add(eventMapper.mapToEventShortDto(eventsByUri.get(view.getUri()), view.getHits()));
+            }
+            statClient.post(info, eventsByUri.keySet());
+            if(filter.getSort() == EventFilter.Sort.EVENT_DATE){
+                return eventShortDto.stream().sorted(Comparator.comparing(EventShortDto::getEventDate)).skip(filter.getFrom()).limit(filter.getSize()).toList();
+            }else{
+                return eventShortDto.stream().sorted(Comparator.comparing(EventShortDto::getViews)).skip(filter.getFrom()).limit(filter.getSize()).toList();
+            }
+        }
+        return eventShortDto;
     }
 
     @Override

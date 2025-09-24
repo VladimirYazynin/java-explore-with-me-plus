@@ -25,7 +25,7 @@ public class EventAdminController {
     @GetMapping
     List<EventFullDto> getAllEvents(
             @RequestParam Integer[] users,
-            @RequestParam String[] states,
+            @RequestParam State[] states,
             @RequestParam Integer[] categories,
             @RequestParam LocalDateTime rangeStart,
             @RequestParam LocalDateTime rangeEnd,

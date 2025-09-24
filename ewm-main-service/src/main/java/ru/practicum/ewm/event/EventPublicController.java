@@ -27,10 +27,10 @@ public class EventPublicController {
             @RequestParam String text,
             @RequestParam Integer[] categories,
             @RequestParam Boolean paid,
-            @RequestParam LocalDateTime rangeStart,
-            @RequestParam LocalDateTime rangeEnd,
+            @RequestParam(required = false) LocalDateTime rangeStart,
+            @RequestParam(required = false) LocalDateTime rangeEnd,
             @RequestParam(defaultValue = "false") Boolean onlyAvailable,
-            @RequestParam String sort,
+            @RequestParam EventFilter.Sort sort,
             @RequestParam(defaultValue = "0") int from,
             @RequestParam(defaultValue = "10") int size,
             HttpServletRequest request

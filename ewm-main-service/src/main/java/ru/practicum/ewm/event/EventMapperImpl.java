@@ -6,6 +6,7 @@ import ru.practicum.ewm.category.Category;
 import ru.practicum.ewm.category.CategoryMapper;
 import ru.practicum.ewm.category.dto.CategoryDto;
 import ru.practicum.ewm.event.dto.EventFullDto;
+import ru.practicum.ewm.event.dto.EventShortDto;
 import ru.practicum.ewm.event.dto.NewEventDto;
 import ru.practicum.ewm.event.interfaces.EventMapper;
 import ru.practicum.ewm.user.dto.UserShortDto;
@@ -63,5 +64,20 @@ public class EventMapperImpl implements EventMapper {
                 .title(event.getTitle())
                 .views(views)
                 .build();
+    }
+
+    @Override
+    public EventShortDto mapToEventShortDto(Event event, long views) {
+        EventShortDto shortDto = new EventShortDto();
+        shortDto.setAnnotation(event.getAnnotation());
+        shortDto.setCategory(new CategoryDto(event.getCategory().getId(), event.getCategory().getName()));
+        shortDto.setConfirmedRequests(event.getParticipationRequests().stream().filter(r -> r.getStatus().equals(State.CONFIRMED)).count());
+        shortDto.setEventDate(event.getEventDate());
+        shortDto.setId(event.getId());
+        shortDto.setInitiator(new UserShortDto(event.getInitiator().getId(),event.getInitiator().getName()));
+        shortDto.setPaid(event.getPaid());
+        shortDto.setTitle(event.getTitle());
+        shortDto.setViews(views);
+        return shortDto;
     }
 }
