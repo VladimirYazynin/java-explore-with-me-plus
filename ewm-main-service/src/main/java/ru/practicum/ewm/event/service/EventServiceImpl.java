@@ -281,7 +281,6 @@ public class EventServiceImpl implements EventService {
         // Логируем даты перед сортировкой для отладки
         log.debug("Даты событий перед сортировкой: {}",
                 shortEvents.stream().map(EventShortDto::getEventDate).collect(Collectors.toList()));
-
         // Сортировка
         if (sort != null) {
             if (sort.equals(VIEWS)) {
