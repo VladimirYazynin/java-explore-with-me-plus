@@ -1,18 +1,17 @@
-package ru.practicum;
+package ru.practicum.ewm.event;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class ViewStatsDto {
+public class StatRequest {
     private String app;
     private String uri;
-    private long hits;
-
-    public Long getPathVariable(){
-        return null;
-    }
+    private String ip;
+    private String timestamp;
 }
