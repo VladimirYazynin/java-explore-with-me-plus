@@ -15,11 +15,6 @@ public class BaseClient {
         this.rest = rest;
     }
 
-    // ДОБАВЛЕН НОВЫЙ МЕТОД для упрощения вызова без userId
-    protected ResponseEntity<Object> get(String path, @Nullable Map<String, Object> parameters) {
-        return makeAndSendRequest(HttpMethod.GET, path, null, parameters, null);
-    }
-
     protected ResponseEntity<Object> get(String path) {
         return get(path, null, null, null);
     }

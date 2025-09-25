@@ -61,7 +61,6 @@ public class EventServiceImpl implements EventService {
         Event thisEvent = eventMapper.toEvent(event);
         dateValidation(LocalDateTime.parse(event.getEventDate(), formatter));
         thisEvent.setPaid(event.getPaid() != null ? event.getPaid() : false);
-        // ДОБАВЛЕНА ПРОВЕРКА НА ОТРИЦАТЕЛЬНЫЙ LIMIT
         thisEvent.setParticipantLimit(
                 Optional.ofNullable(event.getParticipantLimit())
                         .map(limit -> {
@@ -118,7 +117,6 @@ public class EventServiceImpl implements EventService {
         if (!thisEvent.getInitiator().equals(user)) {
             throw new AccessException("Нет доступа");
         }
-        // ДОБАВЛЕНА ПРОВЕРКА НА ОТРИЦАТЕЛЬНЫЙ LIMIT
         if (event.getParticipantLimit() != null && event.getParticipantLimit() < 0) {
             throw new ValidationException("Лимит участников не может быть отрицательным");
         }
@@ -251,12 +249,11 @@ public class EventServiceImpl implements EventService {
             builder.and(QEvent.event.category.id.in(categories));
         }
         LocalDateTime startDate = Optional.ofNullable(rangeStart).orElse(LocalDateTime.now());
-        LocalDateTime endDate = rangeEnd;
-        if (endDate != null) {
-            if (endDate.isBefore(startDate)) {
+        if (rangeEnd != null) {
+            if (rangeEnd.isBefore(startDate)) {
                 throw new ValidationException("Конечная дата не может быть раньше начальной");
             }
-            builder.and(QEvent.event.eventDate.between(startDate, endDate));
+            builder.and(QEvent.event.eventDate.between(startDate, rangeEnd));
         } else {
             builder.and(QEvent.event.eventDate.goe(startDate));
         }
@@ -285,7 +282,7 @@ public class EventServiceImpl implements EventService {
                                 LocalDateTime d2 = LocalDateTime.parse(e2.getEventDate(), formatter);
                                 return d1.compareTo(d2);
                             } catch (Exception ex) {
-                                log.warn("Ошибка парсинга даты при сортировке: e1={}, e2={}", e1.getEventDate(), e2.getEventDate(), ex);
+                                log.warn("Ошибка форматирования даты при сортировке: e1={}, e2={}", e1.getEventDate(), e2.getEventDate(), ex);
                                 return e1.getId().compareTo(e2.getId());
                             }
                         })
@@ -368,7 +365,6 @@ public class EventServiceImpl implements EventService {
         if (eventToUpdate.getPaid() != null) {
             foundEvent.setPaid(eventToUpdate.getPaid());
         }
-        // ДОБАВЛЕНА ПРОВЕРКА НА ОТРИЦАТЕЛЬНЫЙ LIMIT
         if (eventToUpdate.getParticipantLimit() != null) {
             if (eventToUpdate.getParticipantLimit() < 0) {
                 throw new ValidationException("Лимит участников не может быть отрицательным");
@@ -415,8 +411,7 @@ public class EventServiceImpl implements EventService {
             );
             long views = 0L;
             if (viewStatsDto != null && !viewStatsDto.isEmpty()) {
-                // Предполагаем, что hits - это Long. Если Integer - измените на Integer
-                views = viewStatsDto.get(0).getHits() != null ? viewStatsDto.get(0).getHits() : 0L;
+                views = viewStatsDto.getFirst().getHits() != null ? viewStatsDto.getFirst().getHits() : 0L;
             }
             event.setViews((int) views);
             Event savedEvent = eventRepository.save(event);
@@ -424,7 +419,6 @@ public class EventServiceImpl implements EventService {
             return savedEvent;
         } catch (Exception e) {
             log.error("Ошибка при получении статистики для события {}", event.getId(), e);
-            // В случае ошибки возвращаем событие без изменений
             return event;
         }
     }
