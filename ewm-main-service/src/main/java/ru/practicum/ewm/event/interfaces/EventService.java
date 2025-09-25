@@ -51,7 +51,7 @@ public interface EventService {
      * - Эндпоинт возвращает полную информацию обо всех событиях подходящих под переданные условия <br>
      * - В случае, если по заданным фильтрам не найдено ни одного события, возвращает пустой список <br>
      */
-    List<EventFullDto> findAllEvents(EventFilter filter);
+    List<EventFullDto> findAllEvents(EventFilter filter, RequestInfo info);
 
     /**
      * <h4> Admin: /events/{eventId} </h4>

@@ -53,35 +53,34 @@ public class EventServiceImpl implements EventService {
     public EventFullDto getPublishedEventById(long eventId, RequestInfo info) throws EventNotFound {
         Event event = eventRepository.findByIdAndState(eventId, PUBLISHED)
                 .orElseThrow(() -> new EventNotFound("Событие не найдено", "id нет в базе или не опубликовано"));
-        List<ParticipationRequest> requests = requestRepository.findAllByEventIdAndStatus(eventId, CONFIRMED);
-        // запрос в сервис статистики
+
         long views = statClient.get(event.getPublishedOn(), LocalDateTime.now(), info, false).getHits();
         statClient.post(info);
 
-        return eventMapper.mapToEventFullDto(event, views, requests.size());
+        return eventMapper.mapToEventFullDto(event, views);
     }
 
     @Override
     public List<EventShortDto> findPublishedEvents(EventFilter filter, RequestInfo info) {
         List<EventShortDto> eventShortDto = new ArrayList<>();
-        Map<String, Event> eventsByUri = new HashMap<>();
+        Map<Long, Event> events = new HashMap<>();
         filter.addStates(PUBLISHED);
         LocalDateTime earliest = LocalDateTime.now();
         for (Event e : eventRepository.findAll(filter.getPredicate())) {
-            eventsByUri.put(info.getUri(e.getId()), e);
+            events.put(e.getId(), e);
             if (earliest.isAfter(e.getPublishedOn())) {
                 earliest = e.getPublishedOn();
             }
         }
-        if (!eventsByUri.isEmpty()) {
-            List<ViewStatsDto> views = statClient.get(earliest, LocalDateTime.now(), eventsByUri.keySet().toArray(new String[0]), false);
+        if (!events.isEmpty()) {
+            List<ViewStatsDto> views = statClient.get(earliest, LocalDateTime.now(), info.getUris(events.keySet()), false);
             for (ViewStatsDto view : views) {
-                eventShortDto.add(eventMapper.mapToEventShortDto(eventsByUri.get(view.getUri()), view.getHits()));
+                eventShortDto.add(eventMapper.mapToEventShortDto(events.get(view.getPathVariable()), view.getHits()));
             }
-            statClient.post(info, eventsByUri.keySet());
-            if(filter.getSort() == EventFilter.Sort.EVENT_DATE){
+            statClient.post(info, events.keySet());
+            if (filter.getSort() == EventFilter.Sort.EVENT_DATE) {
                 return eventShortDto.stream().sorted(Comparator.comparing(EventShortDto::getEventDate)).skip(filter.getFrom()).limit(filter.getSize()).toList();
-            }else{
+            } else {
                 return eventShortDto.stream().sorted(Comparator.comparing(EventShortDto::getViews)).skip(filter.getFrom()).limit(filter.getSize()).toList();
             }
         }
@@ -89,8 +88,25 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    public List<EventFullDto> findAllEvents(EventFilter filter) {
-        return null;
+    public List<EventFullDto> findAllEvents(EventFilter filter, RequestInfo info) {
+        List<EventFullDto> eventFullDtoList = new ArrayList<>();
+        Map<Long, Event> eventById = new HashMap<>();
+        LocalDateTime earliest = LocalDateTime.now();
+        for (Event e : eventRepository.findAll(filter.getPredicate())) {
+            eventById.put(e.getId(), e);
+            if (earliest.isAfter(e.getPublishedOn())) {
+                earliest = e.getPublishedOn();
+            }
+        }
+        if (!eventById.isEmpty()) {
+            List<ViewStatsDto> views = statClient.get(earliest, LocalDateTime.now(), info.getUris(eventById.keySet()), false);
+            for (ViewStatsDto view : views) {
+                Event event = eventById.get(view.getPathVariable());
+                eventFullDtoList.add(eventMapper.mapToEventFullDto(event, view.getHits()));
+            }
+            return eventFullDtoList.stream().skip(filter.getFrom()).limit(filter.getSize()).toList();
+        }
+        return eventFullDtoList;
     }
 
     @Override
@@ -218,7 +234,23 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public List<EventShortDto> findEventsAddedByUser(Long userId, EventFilter filter) {
-        return null;
+        List<EventShortDto> eventShortDto = new ArrayList<>();
+        Map<Long, Event> events = new HashMap<>();
+        LocalDateTime earliest = LocalDateTime.now();
+        for (Event e : eventRepository.findByInitiatorId(userId)) {
+            events.put(e.getId(), e);
+            if (earliest.isAfter(e.getPublishedOn())) {
+                earliest = e.getPublishedOn();
+            }
+        }
+        if (!events.isEmpty()) {
+            List<ViewStatsDto> views = statClient.get(earliest, LocalDateTime.now(), info.getUris(events.keySet()), false);
+            for (ViewStatsDto view : views) {
+                eventShortDto.add(eventMapper.mapToEventShortDto(events.get(view.getPathVariable()), view.getHits()));
+            }
+            return eventShortDto.stream().skip(filter.getFrom()).limit(filter.getSize()).toList();
+        }
+        return eventShortDto;
     }
 
     @Override

@@ -11,4 +11,8 @@ public class ViewStatsDto {
     private String app;
     private String uri;
     private long hits;
+
+    public Long getPathVariable(){
+        return null;
+    }
 }

@@ -14,8 +14,8 @@ import static ru.practicum.ewm.event.QEvent.*;
 public class EventFilter {
     private String text;
     private State[] states;
-    private Integer[] categories;
-    private Integer[] users;
+    private Long[] categories;
+    private Long[] users;
     private Boolean paid;
     private LocalDateTime rangeStart;
     private LocalDateTime rangeEnd;

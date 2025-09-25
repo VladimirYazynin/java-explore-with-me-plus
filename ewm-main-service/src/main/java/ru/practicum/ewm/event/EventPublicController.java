@@ -14,6 +14,8 @@ import ru.practicum.ewm.event.interfaces.EventService;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import static ru.practicum.ewm.event.dto.EventFilter.*;
+
 @Slf4j
 @RestController
 @RequestMapping(path = "/events")
@@ -25,12 +27,12 @@ public class EventPublicController {
     @GetMapping
     List<EventShortDto> getAllPublishedEvents(
             @RequestParam String text,
-            @RequestParam Integer[] categories,
+            @RequestParam Long[] categories,
             @RequestParam Boolean paid,
             @RequestParam(required = false) LocalDateTime rangeStart,
             @RequestParam(required = false) LocalDateTime rangeEnd,
             @RequestParam(defaultValue = "false") Boolean onlyAvailable,
-            @RequestParam EventFilter.Sort sort,
+            @RequestParam Sort sort,
             @RequestParam(defaultValue = "0") int from,
             @RequestParam(defaultValue = "10") int size,
             HttpServletRequest request

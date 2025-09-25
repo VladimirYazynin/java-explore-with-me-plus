@@ -24,13 +24,14 @@ public class EventAdminController {
 
     @GetMapping
     List<EventFullDto> getAllEvents(
-            @RequestParam Integer[] users,
+            @RequestParam Long[] users,
             @RequestParam State[] states,
-            @RequestParam Integer[] categories,
+            @RequestParam Long[] categories,
             @RequestParam LocalDateTime rangeStart,
             @RequestParam LocalDateTime rangeEnd,
             @RequestParam(defaultValue = "0") int from,
-            @RequestParam(defaultValue = "10") int size
+            @RequestParam(defaultValue = "10") int size,
+            HttpServletRequest request
     ) {
         EventFilter filter = new EventFilter();
         filter.setUsers(users);
@@ -40,7 +41,8 @@ public class EventAdminController {
         filter.setRangeEnd(rangeEnd);
         filter.setFrom(from);
         filter.setSize(size);
-        return eventService.findAllEvents(filter);
+        RequestInfo info = new RequestInfo(request.getRemoteAddr(), request.getRequestURI());
+        return eventService.findAllEvents(filter, info);
     }
 
     @PatchMapping("/{eventId}")
