@@ -238,23 +238,18 @@ public class EventServiceImpl implements EventService {
                 text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, from, size);
         PageRequest page = PageRequest.of(from, size);
         BooleanBuilder builder = new BooleanBuilder();
-        // Фильтр: только опубликованные события
         builder.and(QEvent.event.state.eq(PUBLISHED));
-        // Фильтр по тексту (в аннотации или описании)
         if (Objects.nonNull(text)) {
             BooleanExpression byAnnotation = QEvent.event.annotation.containsIgnoreCase(text);
             BooleanExpression byDescription = QEvent.event.description.containsIgnoreCase(text);
             builder.and(byAnnotation.or(byDescription));
         }
-        // Фильтр по оплате
         if (Objects.nonNull(paid)) {
             builder.and(QEvent.event.paid.eq(paid));
         }
-        // Фильтр по категориям
         if (Objects.nonNull(categories) && categories.length > 0) {
             builder.and(QEvent.event.category.id.in(categories));
         }
-        // Фильтр по датам
         LocalDateTime startDate = Optional.ofNullable(rangeStart).orElse(LocalDateTime.now());
         LocalDateTime endDate = rangeEnd;
         if (endDate != null) {
@@ -263,25 +258,19 @@ public class EventServiceImpl implements EventService {
             }
             builder.and(QEvent.event.eventDate.between(startDate, endDate));
         } else {
-            // Используем >= (goe), чтобы включить события, начинающиеся прямо сейчас
             builder.and(QEvent.event.eventDate.goe(startDate));
         }
-        // Фильтр: только если есть свободные места (если onlyAvailable=true)
         if (Boolean.TRUE.equals(onlyAvailable)) {
             builder.and(QEvent.event.participantLimit.gt(QEvent.event.confirmedRequests));
         }
-        // Получаем события из репозитория
         Iterable<Event> events = eventRepository.findAll(builder, page);
         sendData(request);
-        // Маппим события в DTO
         List<EventShortDto> shortEvents = new ArrayList<>();
         for (Event event : events) {
             shortEvents.add(eventMapper.toEventShortDto(receiveData(event)));
         }
-        // Логируем даты перед сортировкой для отладки
         log.debug("Даты событий перед сортировкой: {}",
                 shortEvents.stream().map(EventShortDto::getEventDate).collect(Collectors.toList()));
-        // Сортировка
         if (sort != null) {
             if (sort.equals(VIEWS)) {
                 shortEvents = shortEvents.stream()
@@ -289,7 +278,7 @@ public class EventServiceImpl implements EventService {
                         .collect(Collectors.toList());
             } else if (sort.equals(EVENT_DATE)) {
                 shortEvents = shortEvents.stream()
-                        .filter(event -> event.getEventDate() != null) // Защита от null
+                        .filter(event -> event.getEventDate() != null)
                         .sorted((e1, e2) -> {
                             try {
                                 LocalDateTime d1 = LocalDateTime.parse(e1.getEventDate(), formatter);
@@ -297,7 +286,6 @@ public class EventServiceImpl implements EventService {
                                 return d1.compareTo(d2);
                             } catch (Exception ex) {
                                 log.warn("Ошибка парсинга даты при сортировке: e1={}, e2={}", e1.getEventDate(), e2.getEventDate(), ex);
-                                // fallback: сортируем по ID, чтобы избежать падения
                                 return e1.getId().compareTo(e2.getId());
                             }
                         })
@@ -418,11 +406,26 @@ public class EventServiceImpl implements EventService {
 
     private Event receiveData(Event event) {
         log.debug("receiveData({})", event);
-        List<ViewStatsDto> viewStatsDto = statsService.get(LocalDateTime.now().minusYears(1),
-                LocalDateTime.now().plusDays(1), new String[]{"/events/" + event.getId()}, String.valueOf(true));
-        event.setViews(viewStatsDto.size());
-        Event savedEvent = eventRepository.save(event);
-        log.info("Сохранено событие с подсчётом просмотров: {}", savedEvent);
-        return savedEvent;
+        try {
+            List<ViewStatsDto> viewStatsDto = statsService.get(
+                    LocalDateTime.now().minusYears(1),
+                    LocalDateTime.now().plusDays(1),
+                    new String[]{"/events/" + event.getId()},
+                    "true"
+            );
+            long views = 0L;
+            if (viewStatsDto != null && !viewStatsDto.isEmpty()) {
+                // Предполагаем, что hits - это Long. Если Integer - измените на Integer
+                views = viewStatsDto.get(0).getHits() != null ? viewStatsDto.get(0).getHits() : 0L;
+            }
+            event.setViews((int) views);
+            Event savedEvent = eventRepository.save(event);
+            log.info("Сохранено событие с подсчётом просмотров: {}", savedEvent);
+            return savedEvent;
+        } catch (Exception e) {
+            log.error("Ошибка при получении статистики для события {}", event.getId(), e);
+            // В случае ошибки возвращаем событие без изменений
+            return event;
+        }
     }
 }

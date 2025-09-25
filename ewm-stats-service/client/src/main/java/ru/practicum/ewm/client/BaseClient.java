@@ -15,6 +15,11 @@ public class BaseClient {
         this.rest = rest;
     }
 
+    // ДОБАВЛЕН НОВЫЙ МЕТОД для упрощения вызова без userId
+    protected ResponseEntity<Object> get(String path, @Nullable Map<String, Object> parameters) {
+        return makeAndSendRequest(HttpMethod.GET, path, null, parameters, null);
+    }
+
     protected ResponseEntity<Object> get(String path) {
         return get(path, null, null, null);
     }
@@ -45,42 +50,6 @@ public class BaseClient {
 
     protected <T, K> ResponseEntity<K> post(String path, Long userId, @Nullable Map<String, Object> parameters, T body, K response) {
         return makeAndSendRequest(HttpMethod.POST, path, userId, parameters, body, response);
-    }
-
-    protected <T> ResponseEntity<Object> put(String path, long userId, T body) {
-        return put(path, userId, null, body);
-    }
-
-    protected <T> ResponseEntity<Object> put(String path, long userId, @Nullable Map<String, Object> parameters, T body) {
-        return makeAndSendRequest(HttpMethod.PUT, path, userId, parameters, body);
-    }
-
-    protected <T> ResponseEntity<Object> patch(String path, T body) {
-        return patch(path, null, null, body);
-    }
-
-    protected <T> ResponseEntity<Object> patch(String path, long userId) {
-        return patch(path, userId, null, null);
-    }
-
-    protected <T> ResponseEntity<Object> patch(String path, long userId, T body) {
-        return patch(path, userId, null, body);
-    }
-
-    protected <T> ResponseEntity<Object> patch(String path, Long userId, @Nullable Map<String, Object> parameters, T body) {
-        return makeAndSendRequest(HttpMethod.PATCH, path, userId, parameters, body);
-    }
-
-    protected ResponseEntity<Object> delete(String path) {
-        return delete(path, null, null);
-    }
-
-    protected ResponseEntity<Object> delete(String path, long userId) {
-        return delete(path, userId, null);
-    }
-
-    protected ResponseEntity<Object> delete(String path, Long userId, @Nullable Map<String, Object> parameters) {
-        return makeAndSendRequest(HttpMethod.DELETE, path, userId, parameters, null);
     }
 
     private <T, K> ResponseEntity<K> makeAndSendRequest(HttpMethod method, String path, Long userId, @Nullable Map<String, Object> parameters, @Nullable T body, K response) {

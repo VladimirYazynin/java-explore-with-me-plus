@@ -43,12 +43,19 @@ public class StatService extends BaseClient {
         Map<String, Object> map = Map.of(
                 "start", start.format(formatter),
                 "end", end.format(formatter),
-                "uris", uris,
+                "uris", uris != null ? uris : new String[0], // защита от null
                 "unique", unique
-
         );
-        ResponseEntity<ArrayList<ViewStatsDto>> responseEntity =
-                this.get("/stats?start={start}&end={end}&uris={uris}&uniq={unique}", map, new ArrayList<>());
-        return responseEntity.getBody();
+
+        // Используем безопасное приведение типов
+        ResponseEntity<Object> responseEntity = this.get("/stats?start={start}&end={end}&uris={uris}&unique={unique}", map);
+
+        // Безопасное извлечение тела ответа
+        if (responseEntity.getBody() instanceof List) {
+            return (List<ViewStatsDto>) responseEntity.getBody();
+        } else {
+            // Если пришел не List, возвращаем пустой список
+            return new ArrayList<>();
+        }
     }
 }
