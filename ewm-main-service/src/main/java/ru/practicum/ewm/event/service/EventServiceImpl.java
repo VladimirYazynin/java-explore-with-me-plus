@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.EndpointHitDto;
 import ru.practicum.ewm.ViewStatsDto;
 import ru.practicum.ewm.category.repository.CategoryRepository;
@@ -43,6 +44,7 @@ import static ru.practicum.ewm.enums.State.*;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class EventServiceImpl implements EventService {
     private final EventRepository eventRepository;
     private final LocationRepository locationRepository;
@@ -55,8 +57,9 @@ public class EventServiceImpl implements EventService {
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     @Override
+    @Transactional
     public EventFullDto create(Long userId, NewEventDto event) {
-        log.debug("create({}, {})", userId, event);
+        log.info("create({}, {})", userId, event);
         User user = userSearch(userId);
         Event thisEvent = eventMapper.toEvent(event);
         dateValidation(LocalDateTime.parse(event.getEventDate(), formatter));
@@ -85,7 +88,7 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public List<EventFullDto> getAllByOwner(Long userId, int from, int size) {
-        log.debug("getAllByOwner({}, {}, {})", userId, from, size);
+        log.info("getAllByOwner({}, {}, {})", userId, from, size);
         User user = userSearch(userId);
         PageRequest page = PageRequest.of(from, size);
         List<EventFullDto> events = eventRepository.findAllByInitiator(user, page)
@@ -96,7 +99,7 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public EventFullDto getByIdByOwner(Long userId, Long eventId) {
-        log.debug("getByIdByOwner({}, {})", userId, eventId);
+        log.info("getByIdByOwner({}, {})", userId, eventId);
         userSearch(userId);
         Event event = eventSearch(eventId);
         log.info("Возвращено событие по запросу пользователя: {}", event);
@@ -104,8 +107,9 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
+    @Transactional
     public EventFullDto updateByIdByOwner(Long userId, Long eventId, UpdateEventUserRequest event) {
-        log.debug("updateByIdByOwner({}, {}, {})", userId, eventId, event);
+        log.info("updateByIdByOwner({}, {}, {})", userId, eventId, event);
         User user = userSearch(userId);
         Event thisEvent = eventSearch(eventId);
         if (thisEvent.getState().equals(PUBLISHED)) {
@@ -145,7 +149,7 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public List<ParticipationRequestDto> getRequests(Long userId, Long eventId) {
-        log.debug("getRequests({}, {})", userId, eventId);
+        log.info("getRequests({}, {})", userId, eventId);
         User user = userSearch(userId);
         Event event = eventSearch(eventId);
         if (!event.getInitiator().equals(user)) {
@@ -158,9 +162,10 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
+    @Transactional
     public EventRequestStatusUpdateResult updateStatus(Long userId, Long eventId,
                                                        EventRequestStatusUpdateRequest request) {
-        log.debug("updateStatus({}, {}, {})", userId, eventId, request);
+        log.info("updateStatus({}, {}, {})", userId, eventId, request);
         userSearch(userId);
         Event event = eventSearch(eventId);
         List<ParticipationRequest> requests = requestRepository.findAllByEvent(event);
@@ -194,7 +199,7 @@ public class EventServiceImpl implements EventService {
     @Override
     public List<EventFullDto> searchEventsByAdmin(Long[] users, String[] states, Integer[] categories,
                                                   LocalDateTime rangeStart, LocalDateTime rangeEnd, int from, int size) {
-        log.debug("searchEventsByAdmin({}, {}, {}, {}, {}, {}, {})",
+        log.info("searchEventsByAdmin({}, {}, {}, {}, {}, {}, {})",
                 users, states, categories, rangeStart, rangeEnd, from, size);
         PageRequest page = PageRequest.of(from, size, ASC, "id");
         BooleanExpression byUserId;
@@ -232,7 +237,7 @@ public class EventServiceImpl implements EventService {
     public List<EventShortDto> searchEvents(String text, Integer[] categories, Boolean paid, LocalDateTime rangeStart,
                                             LocalDateTime rangeEnd, Boolean onlyAvailable, Sort sort,
                                             int from, int size, HttpServletRequest request) {
-        log.debug("searchEvents(text={}, categories={}, paid={}, rangeStart={}, rangeEnd={}, onlyAvailable={}, sort={}, from={}, size={})",
+        log.info("searchEvents(text={}, categories={}, paid={}, rangeStart={}, rangeEnd={}, onlyAvailable={}, sort={}, from={}, size={})",
                 text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, from, size);
         PageRequest page = PageRequest.of(from, size);
         BooleanBuilder builder = new BooleanBuilder();
@@ -266,7 +271,7 @@ public class EventServiceImpl implements EventService {
         for (Event event : events) {
             shortEvents.add(eventMapper.toEventShortDto(receiveData(event)));
         }
-        log.debug("Даты событий перед сортировкой: {}",
+        log.info("Даты событий перед сортировкой: {}",
                 shortEvents.stream().map(EventShortDto::getEventDate).collect(Collectors.toList()));
         if (sort != null) {
             if (sort.equals(VIEWS)) {
@@ -295,7 +300,7 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public EventFullDto getById(Long eventId, HttpServletRequest request) {
-        log.debug("getById({})", eventId);
+        log.info("getById({})", eventId);
         Event event = eventSearch(eventId);
         if (event.getState() != PUBLISHED) {
             throw new NotFoundException("Не найдено");
@@ -307,8 +312,9 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
+    @Transactional
     public EventFullDto updateByIdByAdmin(Long eventId, UpdateEventAdminRequest event) {
-        log.debug("updateByIdByAdmin({}, {})", eventId, event);
+        log.info("updateByIdByAdmin({}, {})", eventId, event);
         Event thisEvent = eventSearch(eventId);
         if (!thisEvent.getState().equals(PENDING)) {
             throw new DataViolationException("Нельзя изменить данные события");
@@ -332,7 +338,7 @@ public class EventServiceImpl implements EventService {
     }
 
     private User userSearch(Long userId) {
-        log.debug("userSearch({})", userId);
+        log.info("userSearch({})", userId);
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("Пользователь не найден"));
         log.info("Запрос на поиск пользователя прошёл успешно: {}", user);
@@ -340,7 +346,7 @@ public class EventServiceImpl implements EventService {
     }
 
     private Event eventSearch(Long eventId) {
-        log.debug("eventSearch({})", eventId);
+        log.info("eventSearch({})", eventId);
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new NotFoundException("Событие не найдено"));
         log.info("Запрос на поиск события прошёл успешно: {}", event);
@@ -348,7 +354,7 @@ public class EventServiceImpl implements EventService {
     }
 
     private Event fieldsChecker(UpdateEventUserRequest eventToUpdate, Event foundEvent) {
-        log.debug("fieldsChecker({}, {})", eventToUpdate, foundEvent);
+        log.info("fieldsChecker({}, {})", eventToUpdate, foundEvent);
         if (eventToUpdate.getAnnotation() != null) {
             foundEvent.setAnnotation(eventToUpdate.getAnnotation());
         }
@@ -382,7 +388,7 @@ public class EventServiceImpl implements EventService {
     }
 
     private void dateValidation(LocalDateTime date) {
-        log.debug("dateValidation({})", date);
+        log.info("dateValidation({})", date);
         if (date.isBefore(LocalDateTime.now().plusHours(2))) {
             throw new ValidationException("Событие должно быть не меньше, чем за 2 часа до текущего времени");
         }
@@ -390,7 +396,7 @@ public class EventServiceImpl implements EventService {
     }
 
     private void sendData(HttpServletRequest request) {
-        log.debug("sendData({})", request);
+        log.info("sendData({})", request);
         EndpointHitDto endpointHit = new EndpointHitDto();
         endpointHit.setApp("event");
         endpointHit.setIp(request.getRemoteAddr());
@@ -401,7 +407,7 @@ public class EventServiceImpl implements EventService {
     }
 
     private Event receiveData(Event event) {
-        log.debug("receiveData({})", event);
+        log.info("receiveData({})", event);
         try {
             List<ViewStatsDto> viewStatsDto = statsService.get(
                     LocalDateTime.now().minusYears(1),

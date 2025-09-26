@@ -25,7 +25,7 @@ public class StatsServiceImpl implements StatsService {
 
     @Override
     public EndpointHitDto send(EndpointHitDto endpointHit) {
-        log.debug("send({})", endpointHit);
+        log.info("send({})", endpointHit);
         EndpointHit data = EndpointHitMapper.toEndpointHit(endpointHit);
         EndpointHit endpoint = statsRepository.save(data);
         log.info("Сохранена информация по запросу в сервис: {}", endpoint);
@@ -34,7 +34,7 @@ public class StatsServiceImpl implements StatsService {
 
     @Override
     public List<ViewStatsDto> receive(LocalDateTime start, LocalDateTime end, String[] uris, Boolean isUnique) {
-        log.debug("receive({}, {}, {}, {})", start, end, uris, isUnique);
+        log.info("receive({}, {}, {}, {})", start, end, uris, isUnique);
         if (start.isAfter(end)) {
             throw new DateTimeFormatException("Неверно указаны данные даты и времени");
         }

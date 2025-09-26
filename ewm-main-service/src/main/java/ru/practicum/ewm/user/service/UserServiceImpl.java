@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.exception.DataViolationException;
 import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.user.dto.UserDto;
@@ -22,8 +23,9 @@ public class UserServiceImpl implements UserService {
     private final UserMapper mapper;
 
     @Override
+    @Transactional
     public UserDto create(UserDto user) {
-        log.debug("create({})", user);
+        log.info("create({})", user);
         User thisUser = mapper.toUser(user);
         if (repository.existsByName(thisUser.getName())) {
             throw new DataViolationException("Пользователь уже существует");
@@ -34,8 +36,9 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<UserDto> get(Long[] ids, int from, int size) {
-        log.debug("get({}, {}, {})", ids, from, size);
+        log.info("get({}, {}, {})", ids, from, size);
         PageRequest page = PageRequest.of(from, size);
         List<UserDto> users;
         if (ids != null) {
@@ -49,8 +52,9 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public void delete(Long userId) {
-        log.debug("delete({})", userId);
+        log.info("delete({})", userId);
         User thisUser = repository.findById(userId).orElseThrow(() -> new NotFoundException("Пользователь не найден"));
         repository.delete(thisUser);
         log.info("Администратором удалён пользователь: {}", thisUser);

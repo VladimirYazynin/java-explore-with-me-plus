@@ -3,6 +3,7 @@ package ru.practicum.ewm.request.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.enums.State;
 import ru.practicum.ewm.event.model.Event;
 import ru.practicum.ewm.event.repository.EventRepository;
@@ -32,8 +33,9 @@ public class RequestServiceImpl implements RequestService {
     private final EventRepository eventRepository;
 
     @Override
+    @Transactional
     public ParticipationRequestDto create(Long userId, Long eventId) {
-        log.debug("create({}, {})", userId, eventId);
+        log.info("create({}, {})", userId, eventId);
         User user = userValidation(userId);
         Event event = eventRepository.findById(eventId).orElseThrow(() -> new NotFoundException("Событие не найдено"));
         if (!event.getState().equals(PUBLISHED)) {
@@ -61,8 +63,9 @@ public class RequestServiceImpl implements RequestService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<ParticipationRequestDto> get(Long userId) {
-        log.debug("get({})", userId);
+        log.info("get({})", userId);
         User user = userValidation(userId);
         List<ParticipationRequestDto> requests = requestRepository.findAllByRequester(user)
                 .stream().map(requestMapper::toParticipationRequestDto).collect(Collectors.toList());
@@ -71,8 +74,9 @@ public class RequestServiceImpl implements RequestService {
     }
 
     @Override
+    @Transactional
     public ParticipationRequestDto cancel(Long userId, Long requestId) {
-        log.debug("cancel({}, {})", userId, requestId);
+        log.info("cancel({}, {})", userId, requestId);
         User user = userValidation(userId);
         ParticipationRequest request = requestRepository.findById(requestId)
                 .orElseThrow(() -> new NotFoundException("Данные не найдены"));
@@ -86,7 +90,7 @@ public class RequestServiceImpl implements RequestService {
     }
 
     private User userValidation(Long userId) {
-        log.debug("userValidation({})", userId);
+        log.info("userValidation({})", userId);
         User user = userRepository.findById(userId).orElseThrow(() -> new NotFoundException("Пользователь не найден"));
         log.info("Зарос на поиск пользователя прошёл успешно: {}", user);
         return user;
