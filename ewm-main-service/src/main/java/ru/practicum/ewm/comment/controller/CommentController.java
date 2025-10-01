@@ -16,6 +16,13 @@ public class CommentController {
     @PostMapping("/users/{userId}/comments")
     public FullCommentDto create(@PathVariable Long userId,
                                  @Valid @RequestBody CommentDto newCommentDto) {
-        return service.addCommentToEventByUser(userId,newCommentDto);
+        return service.addCommentToEventByUser(userId, newCommentDto);
+    }
+
+    @PatchMapping("/users/{userId}/comments/{commentId}")
+    public FullCommentDto update(@PathVariable Long userId,
+                                 @PathVariable Long commentId,
+                                 @Valid @RequestBody CommentDto updatedCommentDto) {
+        return service.updateCommentByUser(userId, commentId, updatedCommentDto);
     }
 }
