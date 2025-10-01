@@ -10,7 +10,7 @@
 			"name": "Comments",
 			"item": [
 				{
-					"name": "Добавление нового комментария",
+					"name": "Добавление нового комментар",
 					"event": [
 						{
 							"listen": "prerequest",
@@ -23,7 +23,7 @@
 									"    let comment;",
 									"    try {",
 									"        const user = await api.addUser(rnd.getUser());",
-									"        pm.collectionVariables.set(\"uid\", user.id)",
+									"        pm.collectionVariables.set(\"uid\", user.id);",
 									"        const category = await api.addCategory(rnd.getCategory());",
 									"        let eventBody = rnd.getEvent(category.id);",
 									"        eventBody['requestModeration'] = true",
@@ -56,6 +56,17 @@
 									"    },  ",
 									"    100 ",
 									");"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
 								],
 								"type": "text/javascript",
 								"packages": {},
@@ -306,6 +317,10 @@
 	"variable": [
 		{
 			"key": "uid",
+			"value": ""
+		},
+		{
+			"key": "baseUrl",
 			"value": ""
 		}
 	]
