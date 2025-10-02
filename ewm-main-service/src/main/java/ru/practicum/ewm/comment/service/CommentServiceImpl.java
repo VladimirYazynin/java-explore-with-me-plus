@@ -57,12 +57,20 @@ public class CommentServiceImpl implements CommentService {
     @Override
     @Transactional
     public void deleteOwnComment(Long userId, Long commentId) {
-
+        if(commentRepository.existsByIdAndAuthorId(commentId,userId)){
+            commentRepository.deleteById(commentId);
+        }else {
+            throw new NotFoundException("Комментарий не найден");
+        }
     }
 
     @Override
     @Transactional
     public void deleteCommentById(Long commentId) {
-
+        if(commentRepository.existsById(commentId)){
+            commentRepository.deleteById(commentId);
+        }else{
+            throw new NotFoundException("Комментарий не найден");
+        }
     }
 }
