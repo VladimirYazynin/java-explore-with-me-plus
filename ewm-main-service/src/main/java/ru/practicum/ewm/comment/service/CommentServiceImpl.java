@@ -2,6 +2,7 @@ package ru.practicum.ewm.comment.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.comment.dto.CommentDto;
 import ru.practicum.ewm.comment.dto.FullCommentDto;
 import ru.practicum.ewm.comment.mapper.CommentMapper;
@@ -25,6 +26,7 @@ public class CommentServiceImpl implements CommentService {
     private final CommentMapper mapper;
 
     @Override
+    @Transactional
     public FullCommentDto addCommentToEventByUser(Long authorId, CommentDto newCommentDto) {
         User author = userRepository.findById(authorId)
                 .orElseThrow(() -> new NotFoundException("Пользователь не найден"));
@@ -40,6 +42,7 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
+    @Transactional
     public FullCommentDto updateCommentByUser(Long authorId, Long commentId, CommentDto updatedCommentDto) {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new NotFoundException("Комментарий не найден"));
@@ -49,5 +52,17 @@ public class CommentServiceImpl implements CommentService {
         comment.setEventId(updatedCommentDto.getEventId());
         comment.setText(updatedCommentDto.getText());
         return mapper.toFullCommentDto(commentRepository.save(comment));
+    }
+
+    @Override
+    @Transactional
+    public void deleteOwnComment(Long userId, Long commentId) {
+
+    }
+
+    @Override
+    @Transactional
+    public void deleteCommentById(Long commentId) {
+
     }
 }

@@ -2,11 +2,13 @@ package ru.practicum.ewm.comment.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.ewm.comment.dto.CommentDto;
 import ru.practicum.ewm.comment.dto.FullCommentDto;
 import ru.practicum.ewm.comment.service.CommentService;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 public class CommentController {
@@ -24,5 +26,16 @@ public class CommentController {
                                  @PathVariable Long commentId,
                                  @Valid @RequestBody CommentDto updatedCommentDto) {
         return service.updateCommentByUser(userId, commentId, updatedCommentDto);
+    }
+
+    @DeleteMapping("/users/{userId}/comments/{commentId}")
+    public void deleteOwnComment(@PathVariable Long userId,
+                       @PathVariable Long commentId) {
+        service.deleteOwnComment(userId, commentId);
+    }
+
+    @DeleteMapping("/admin/comments/{commentId}")
+    public void deleteComment(@PathVariable Long commentId) {
+        service.deleteCommentById(commentId);
     }
 }
