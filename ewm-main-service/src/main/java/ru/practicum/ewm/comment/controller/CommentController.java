@@ -5,8 +5,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.ewm.comment.dto.CommentDto;
+import ru.practicum.ewm.comment.dto.CommentShort;
 import ru.practicum.ewm.comment.dto.FullCommentDto;
 import ru.practicum.ewm.comment.service.CommentService;
+
+import java.util.List;
 
 @Slf4j
 @RestController
@@ -37,5 +40,10 @@ public class CommentController {
     @DeleteMapping("/admin/comments/{commentId}")
     public void deleteComment(@PathVariable Long commentId) {
         service.deleteCommentById(commentId);
+    }
+
+    @GetMapping("/admin/comments/{eventId}")
+    public List<CommentShort> getCommentsForEvent(@PathVariable Long eventId){
+        return service.getCommentsForEvent(eventId);
     }
 }

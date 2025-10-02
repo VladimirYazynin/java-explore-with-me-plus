@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.comment.dto.CommentDto;
+import ru.practicum.ewm.comment.dto.CommentShort;
 import ru.practicum.ewm.comment.dto.FullCommentDto;
 import ru.practicum.ewm.comment.mapper.CommentMapper;
 import ru.practicum.ewm.comment.model.Comment;
@@ -15,6 +16,7 @@ import ru.practicum.ewm.user.model.User;
 import ru.practicum.ewm.user.repository.UserRepository;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -72,5 +74,9 @@ public class CommentServiceImpl implements CommentService {
         }else{
             throw new NotFoundException("Комментарий не найден");
         }
+    }
+
+    public List<CommentShort> getCommentsForEvent(Long eventId){
+        return commentRepository.getCommentsByEventId(eventId);
     }
 }
