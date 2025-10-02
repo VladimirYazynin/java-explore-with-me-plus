@@ -66,7 +66,22 @@
 							"listen": "test",
 							"script": {
 								"exec": [
-									""
+									"pm.test(\"Ответ должен содержать код статуса 200 и данные в формате json\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    pm.response.to.be.withBody;",
+									"    pm.response.to.be.json;",
+									"});",
+									"",
+									"const source = JSON.parse(pm.request.body.raw);",
+									"const target = pm.response.json();",
+									"",
+									"pm.test(\"Комментарий должен содержать поля: id, eventId, text, authorName, created\", function () {",
+									"pm.expect(target).to.have.property('id');",
+									"pm.expect(target).to.have.property('eventId');",
+									"pm.expect(target).to.have.property('text');",
+									"pm.expect(target).to.have.property('authorName');",
+									"pm.expect(target).to.have.property('created');",
+									"});"
 								],
 								"type": "text/javascript",
 								"packages": {},
@@ -536,7 +551,7 @@
 									"        eventBody['requestModeration'] = true",
 									"        let event = await api.addEvent(user.id, eventBody);",
 									"        event = await api.publishEvent(event.id);",
-									"        const comment = await api.addComment(rnd.getComment(event.id));",
+									"        const comment = await api.addComment(user.id, rnd.getComment(event.id));",
 									"        pm.collectionVariables.set(\"cid\", comment.id);",
 									"        commentForUpdate = rnd.getComment(event.id);",
 									"        ",
@@ -575,7 +590,22 @@
 							"listen": "test",
 							"script": {
 								"exec": [
-									""
+									"pm.test(\"Ответ должен содержать код статуса 200 и данные в формате json\", function () {",
+									"    pm.response.to.be.ok;    ",
+									"    pm.response.to.be.withBody;",
+									"    pm.response.to.be.json;",
+									"});",
+									"",
+									"const source = JSON.parse(pm.request.body.raw);",
+									"const target = pm.response.json();",
+									"",
+									"pm.test(\"Комментарий должен содержать поля: id, eventId, text, authorName, created\", function () {",
+									"pm.expect(target).to.have.property('id');",
+									"pm.expect(target).to.have.property('eventId');",
+									"pm.expect(target).to.have.property('text');",
+									"pm.expect(target).to.have.property('authorName');",
+									"pm.expect(target).to.have.property('created');",
+									"});"
 								],
 								"type": "text/javascript",
 								"packages": {},
@@ -585,6 +615,105 @@
 					],
 					"request": {
 						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"eventId\": 1,\n    \"text\": \"asdfg\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/users/:userId/comments/:commentId",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users",
+								":userId",
+								"comments",
+								":commentId"
+							],
+							"variable": [
+								{
+									"key": "userId",
+									"value": "{{uid}}",
+									"description": "Id пользователя"
+								},
+								{
+									"key": "commentId",
+									"value": "{{cid}}",
+									"description": "Id комментария"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Удаление автором комментария",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const main = async () => {",
+									"    const api = new API(pm);",
+									"    const rnd = new RandomUtils();",
+									"",
+									"    try {",
+									"        const user = await api.addUser(rnd.getUser());",
+									"        pm.collectionVariables.set(\"uid\", user.id);",
+									"        const category = await api.addCategory(rnd.getCategory());",
+									"        let eventBody = rnd.getEvent(category.id);",
+									"        eventBody['requestModeration'] = true",
+									"        let event = await api.addEvent(user.id, eventBody);",
+									"        event = await api.publishEvent(event.id);",
+									"        const comment = await api.addComment(user.id,rnd.getComment(event.id));",
+									"        pm.collectionVariables.set(\"cid\", comment.id);",
+									"    } catch(err) {",
+									"        console.error(\"Ошибка при подготовке тестовых данных.\", err);",
+									"    }",
+									"};",
+									"",
+									"const interval = setInterval(() => {}, 1000);",
+									"",
+									"setTimeout(async () => ",
+									"    {",
+									"        try {",
+									"            await main();",
+									"        } catch (e) {",
+									"            console.error(e);",
+									"        } finally {",
+									"            clearInterval(interval);",
+									"        }",
+									"    },  ",
+									"    100 ",
+									");"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Ответ должен содержать код статуса 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
 						"header": [],
 						"body": {
 							"mode": "raw",
@@ -845,6 +974,11 @@
 		{
 			"key": "cid",
 			"value": ""
+		},
+		{
+			"key": "eid",
+			"value": "",
+			"type": "default"
 		}
 	]
 }
