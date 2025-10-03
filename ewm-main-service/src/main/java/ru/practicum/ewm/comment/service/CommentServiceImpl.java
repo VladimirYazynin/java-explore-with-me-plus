@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.comment.dto.CommentDto;
-import ru.practicum.ewm.comment.dto.CommentShort;
 import ru.practicum.ewm.comment.dto.FullCommentDto;
 import ru.practicum.ewm.comment.mapper.CommentMapper;
 import ru.practicum.ewm.comment.model.Comment;
@@ -59,9 +58,9 @@ public class CommentServiceImpl implements CommentService {
     @Override
     @Transactional
     public void deleteOwnComment(Long userId, Long commentId) {
-        if(commentRepository.existsByIdAndAuthorId(commentId,userId)){
+        if (commentRepository.existsByIdAndAuthorId(commentId, userId)) {
             commentRepository.deleteById(commentId);
-        }else {
+        } else {
             throw new NotFoundException("Комментарий не найден");
         }
     }
@@ -69,14 +68,16 @@ public class CommentServiceImpl implements CommentService {
     @Override
     @Transactional
     public void deleteCommentById(Long commentId) {
-        if(commentRepository.existsById(commentId)){
+        if (commentRepository.existsById(commentId)) {
             commentRepository.deleteById(commentId);
-        }else{
+        } else {
             throw new NotFoundException("Комментарий не найден");
         }
     }
 
-    public List<CommentShort> getCommentsForEvent(Long eventId){
-        return commentRepository.getCommentsByEventId(eventId);
+    public List<CommentDto> getCommentsForEvent(Long eventId) {
+        return commentRepository.getCommentsByEventId(eventId).stream()
+                .map(mapper::toCommentDto)
+                .toList();
     }
 }
