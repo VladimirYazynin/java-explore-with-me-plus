@@ -4,7 +4,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import ru.practicum.ewm.category.mapper.CategoryMapper;
 import ru.practicum.ewm.category.repository.CategoryRepository;
-import ru.practicum.ewm.event.dto.*;
+import ru.practicum.ewm.comment.mapper.CommentMapper;
+import ru.practicum.ewm.comment.repository.CommentRepository;
+import ru.practicum.ewm.event.dto.EventFullDto;
+import ru.practicum.ewm.event.dto.EventShortDto;
+import ru.practicum.ewm.event.dto.NewEventDto;
+import ru.practicum.ewm.event.dto.UpdateEventAdminRequest;
+import ru.practicum.ewm.event.dto.UpdateEventUserRequest;
 import ru.practicum.ewm.event.model.Event;
 import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.user.mapper.UserMapper;
@@ -18,6 +24,8 @@ public class EventMapper {
     private final CategoryMapper categoryMapper;
     private final CategoryRepository categoryRepository;
     private final UserMapper userMapper;
+    private final CommentRepository commentRepository;
+    private final CommentMapper commentMapper;
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     public Event toEvent(NewEventDto event) {
@@ -56,7 +64,9 @@ public class EventMapper {
                 userMapper.toUserShortDto(event.getInitiator()),
                 publishedOn,
                 event.getState(),
-                event.getViews());
+                event.getViews(),
+                commentRepository.getCommentsByEventId(event.getId())
+        );
     }
 
     public EventShortDto toEventShortDto(Event event) {
