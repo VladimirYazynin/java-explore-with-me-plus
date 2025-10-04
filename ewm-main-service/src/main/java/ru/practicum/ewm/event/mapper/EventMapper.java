@@ -65,9 +65,7 @@ public class EventMapper {
                 publishedOn,
                 event.getState(),
                 event.getViews(),
-                commentRepository.getCommentsByEventId(event.getId()).stream()
-                        .map(commentMapper::toCommentDto)
-                        .toList()
+                commentRepository.getCommentsByEventId(event.getId())
         );
     }
 

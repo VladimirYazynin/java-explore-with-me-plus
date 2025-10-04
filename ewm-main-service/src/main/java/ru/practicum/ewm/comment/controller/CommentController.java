@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import ru.practicum.ewm.comment.dto.CommentDto;
+import ru.practicum.ewm.comment.dto.CommentShort;
 import ru.practicum.ewm.comment.dto.FullCommentDto;
 import ru.practicum.ewm.comment.service.CommentService;
 
@@ -48,7 +49,7 @@ public class CommentController {
     }
 
     @GetMapping("/admin/comments/{eventId}")
-    public List<CommentDto> getCommentsForEvent(@PathVariable Long eventId) {
+    public List<CommentShort> getCommentsForEvent(@PathVariable Long eventId) {
         return service.getCommentsForEvent(eventId);
     }
 }

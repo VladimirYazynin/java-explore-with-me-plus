@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.comment.dto.CommentDto;
+import ru.practicum.ewm.comment.dto.CommentShort;
 import ru.practicum.ewm.comment.dto.FullCommentDto;
 import ru.practicum.ewm.comment.mapper.CommentMapper;
 import ru.practicum.ewm.comment.model.Comment;
@@ -75,9 +76,7 @@ public class CommentServiceImpl implements CommentService {
         }
     }
 
-    public List<CommentDto> getCommentsForEvent(Long eventId) {
-        return commentRepository.getCommentsByEventId(eventId).stream()
-                .map(mapper::toCommentDto)
-                .toList();
+    public List<CommentShort> getCommentsForEvent(Long eventId) {
+        return commentRepository.getCommentsByEventId(eventId);
     }
 }

@@ -1,6 +1,7 @@
 package ru.practicum.ewm.comment.service;
 
 import ru.practicum.ewm.comment.dto.CommentDto;
+import ru.practicum.ewm.comment.dto.CommentShort;
 import ru.practicum.ewm.comment.dto.FullCommentDto;
 
 import java.util.List;
@@ -15,5 +16,5 @@ public interface CommentService {
 
     void deleteCommentById(Long commentId);
 
-    List<CommentDto> getCommentsForEvent(Long eventId);
+    List<CommentShort> getCommentsForEvent(Long eventId);
 }
